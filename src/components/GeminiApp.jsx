@@ -15,7 +15,7 @@ export default function GeminiApp({ onClose, setBgImage }) {
       setUserToken(tokenResponse.access_token);
       setError(null);
     },
-    scope: 'https://www.googleapis.com/auth/cloud-platform',
+    scope: 'https://www.googleapis.com/auth/generative-language',
     onError: (err) => setError('Login Failed'),
   });
 
