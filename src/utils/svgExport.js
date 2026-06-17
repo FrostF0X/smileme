@@ -57,6 +57,8 @@ export const exportCleanSVG = async (shapes, svgRef) => {
 
   const svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${rect.width} ${rect.height}" width="${rect.width}" height="${rect.height}">${defsHtml}${shapesHtml}</svg>`;
 
+  const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+
   if (window.showSaveFilePicker) {
     try {
       const handle = await window.showSaveFilePicker({
@@ -72,7 +74,21 @@ export const exportCleanSVG = async (shapes, svgRef) => {
     }
   }
 
-  const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+  const file = new File([blob], 'Rysunek_Pro.svg', { type: 'image/svg+xml' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({
+        files: [file],
+        title: 'Rysunek_Pro.svg',
+      });
+      return;
+    } catch (err) {
+      // Ignorujemy błędy, np. gdy użytkownik anuluje udostępnianie,
+      // lub w przypadku niepowodzenia i próbujemy użyć elementu 'a'
+      console.error("Błąd podczas próby udostępnienia/zapisu pliku:", err);
+    }
+  }
+
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
