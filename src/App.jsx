@@ -7,6 +7,7 @@ import RightPanel from './components/RightPanel';
 import useDrawing from './hooks/useDrawing';
 import { exportCleanSVG } from './utils/svgExport';
 import { handlePatternUploadEvent, handleImageChangeEvent, handleFileChangeEvent } from './utils/fileHandlers';
+import { traceImageMultipleLayers } from './utils/traceUtils';
 
 export default function App() {
   const svgRef = useRef(null);
@@ -44,6 +45,18 @@ export default function App() {
   const [showRightPanel, setShowRightPanel] = useState(false);
   const [selectedShapeIndex, setSelectedShapeIndex] = useState(null);
   const [bgImage, setBgImage] = useState({ url: null, width: 0, height: 0, x: 0, y: 0, scale: 1, angle: 0, opacity: 0.7 });
+  const [traceConfig, setTraceConfig] = useState({ layers: 1, turdsize: 2, turnpolicy: 'minority' });
+  const [isTracing, setIsTracing] = useState(false);
+
+  const handleTrace = async () => {
+    if (!bgImage.url || isTracing) return;
+    setIsTracing(true);
+    try {
+      const newPathShapes = await traceImageMultipleLayers(bgImage.url, traceConfig, traceConfig.layers);
+      if (newPathShapes.length > 0) commitShapes([...shapes, ...newPathShapes]);
+    } catch (e) { console.error("Trace error", e); }
+    setIsTracing(false);
+  };
 
   const { isDrawing, currentStroke, handlePointerDown, handlePointerMove, handlePointerUp } = useDrawing(
     svgRef, activeTool, globalColor, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage
@@ -97,6 +110,7 @@ export default function App() {
             showRightPanel={showRightPanel} setShowRightPanel={setShowRightPanel} bgImage={bgImage} setBgImage={setBgImage}
             activeTool={activeTool} activeShape={selectedShapeIndex !== null ? shapes[selectedShapeIndex] : null}
             updateSelectedShape={updateSelectedShape} patternInputRef={patternInputRef} svgRef={svgRef}
+            traceConfig={traceConfig} setTraceConfig={setTraceConfig} handleTrace={handleTrace} isTracing={isTracing}
           />
         </div>
       </div>
