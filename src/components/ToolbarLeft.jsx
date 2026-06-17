@@ -1,7 +1,7 @@
 import React from 'react';
-import { IconCircle, IconWave, IconSelect, IconEraser, IconImage } from '../icons/icons';
+import { IconCircle, IconWave, IconSelect, IconEraser, IconImage, IconSparkles } from '../icons/icons';
 
-export default function ToolbarLeft({ activeTool, setActiveTool, bgImage, setShowRightPanel, imageInputRef }) {
+export default function ToolbarLeft({ activeTool, setActiveTool, bgImage, setShowRightPanel, imageInputRef, setShowGeminiApp }) {
   return (
     <div className="w-16 bg-white border-r border-slate-300 flex flex-col items-center py-4 z-20 shrink-0 shadow-lg relative z-30">
       <div className="flex flex-col gap-3 w-full px-2">
@@ -15,6 +15,9 @@ export default function ToolbarLeft({ activeTool, setActiveTool, bgImage, setSho
         <button onClick={() => { if (!bgImage.url) imageInputRef.current.click(); else setShowRightPanel(true); }} title="Obraz Referencyjny (Kalka)" className={`p-2.5 rounded-xl flex justify-center transition-all relative ${bgImage.url ? 'bg-emerald-100 text-emerald-600 shadow-sm' : 'text-slate-500 hover:bg-slate-100'}`}>
           <IconImage />
           {bgImage.url && <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>}
+        </button>
+        <button onClick={() => setShowGeminiApp(true)} title="Generator Obrazów AI" className="p-2.5 rounded-xl flex justify-center transition-all text-purple-500 hover:bg-purple-100">
+          <IconSparkles />
         </button>
       </div>
     </div>
