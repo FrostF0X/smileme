@@ -6,7 +6,7 @@ export default function ShapeRenderer({ shape, index, isSelected, activeTool, ha
     fill: shape.fillPattern ? `url(#pat-${index})` : "none",
     stroke: shape.color, strokeWidth: 4, strokeLinecap: "round", strokeLinejoin: "round",
     onPointerDown: (e) => handleShapeClick(e, index),
-    style: { pointerEvents: 'all' },
+    style: { pointerEvents: (activeTool === 'eraser' || activeTool === 'select') ? 'all' : 'none' },
     className: isSelected ? "opacity-80" : ""
   };
 
