@@ -3,10 +3,17 @@ import ShapeRenderer from './ShapeRenderer';
 import PatternDefs from './PatternDefs';
 
 export default function Canvas({
-  svgRef, shapes, currentStroke, bgImage, isDrawing, activeTool, globalColor,
+  svgRef, mainGroupRef, canvasTransform, shapes, currentStroke, bgImage, isDrawing, activeTool, globalColor,
   handlePointerDown, handlePointerMove, handlePointerUp,
   selectedShapeIndex, handleShapeClick
 }) {
+  const getCursorClass = () => {
+    if (activeTool === 'eraser') return 'eraser-mode';
+    if (activeTool === 'select') return 'select-mode';
+    if (activeTool === 'pan') return 'cursor-grab active:cursor-grabbing';
+    return 'cursor-crosshair';
+  };
+
   return (
     <div className="flex-1 relative overflow-hidden bg-white">
       {shapes.length === 0 && !bgImage.url && currentStroke.length === 0 && (
@@ -17,7 +24,7 @@ export default function Canvas({
 
       <svg
         ref={svgRef}
-        className={`w-full h-full touch-none block overflow-visible ${activeTool === 'eraser' ? 'eraser-mode' : activeTool === 'select' ? 'select-mode' : 'cursor-crosshair'}`}
+        className={`w-full h-full touch-none block overflow-visible ${getCursorClass()}`}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -26,26 +33,28 @@ export default function Canvas({
       >
         <PatternDefs shapes={shapes} />
 
-        {bgImage.url && (
-          <g id="reference-image" transform={`translate(${bgImage.x}, ${bgImage.y}) rotate(${bgImage.angle}) scale(${bgImage.scale})`}>
-            <image href={bgImage.url} x={-bgImage.width / 2} y={-bgImage.height / 2} width={bgImage.width} height={bgImage.height} opacity={bgImage.opacity} pointerEvents="none" />
-          </g>
-        )}
+        <g ref={mainGroupRef} transform={`translate(${canvasTransform.x}, ${canvasTransform.y}) rotate(${canvasTransform.angle}) scale(${canvasTransform.scale})`}>
+          {bgImage.url && (
+            <g id="reference-image" transform={`translate(${bgImage.x}, ${bgImage.y}) rotate(${bgImage.angle}) scale(${bgImage.scale})`}>
+              <image href={bgImage.url} x={-bgImage.width / 2} y={-bgImage.height / 2} width={bgImage.width} height={bgImage.height} opacity={bgImage.opacity} pointerEvents="none" />
+            </g>
+          )}
 
-        {shapes.map((shape, i) => (
-          <ShapeRenderer
-            key={i}
-            shape={shape}
-            index={i}
-            isSelected={activeTool === 'select' && selectedShapeIndex === i}
-            activeTool={activeTool}
-            handleShapeClick={handleShapeClick}
-          />
-        ))}
+          {shapes.map((shape, i) => (
+            <ShapeRenderer
+              key={i}
+              shape={shape}
+              index={i}
+              isSelected={activeTool === 'select' && selectedShapeIndex === i}
+              activeTool={activeTool}
+              handleShapeClick={handleShapeClick}
+            />
+          ))}
 
-        {currentStroke.length > 0 && activeTool !== 'eraser' && activeTool !== 'select' && (
-          <path d={`M ${currentStroke.map(p => `${p.x},${p.y}`).join(' L ')}`} fill="none" stroke={globalColor} strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" opacity={0.6} />
-        )}
+          {currentStroke.length > 0 && activeTool !== 'eraser' && activeTool !== 'select' && activeTool !== 'pan' && (
+            <path d={`M ${currentStroke.map(p => `${p.x},${p.y}`).join(' L ')}`} fill="none" stroke={globalColor} strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" opacity={0.6} />
+          )}
+        </g>
       </svg>
     </div>
   );

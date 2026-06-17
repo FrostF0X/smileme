@@ -1,25 +1,8 @@
 import { useState, useRef, useCallback } from 'react';
 import { processSnapper, processBezierSmoother } from '../utils/shapeProcessor';
+import { calculateNewCanvasState, calculateNewBgImageState } from '../utils/transformUtils';
 
-const calculateNewBgImageState = (pts, bgImage, gestureStart) => {
-  const center = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
-  const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
-  const angle = Math.atan2(pts[1].y - pts[0].y, pts[1].x - pts[0].x);
-
-  if (!gestureStart) {
-    return { startX: center.x, startY: center.y, startDist: dist, startAngle: angle };
-  }
-
-  return {
-    ...bgImage,
-    x: gestureStart.imgX + (center.x - gestureStart.startX),
-    y: gestureStart.imgY + (center.y - gestureStart.startY),
-    scale: gestureStart.imgScale * (dist / gestureStart.startDist),
-    angle: gestureStart.imgAngle + (angle - gestureStart.startAngle) * (180 / Math.PI)
-  };
-};
-
-export default function useDrawing(svgRef, activeTool, globalColor, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage) {
+export default function useDrawing(svgRef, activeTool, globalColor, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage, canvasTransform, setCanvasTransform, transformTarget, mainGroupRef) {
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentStroke, setCurrentStroke] = useState([]);
   const activePointers = useRef(new Map());
@@ -27,33 +10,84 @@ export default function useDrawing(svgRef, activeTool, globalColor, smoothAmount
 
   const getCoordinates = useCallback((e) => {
     if (!svgRef.current) return { x: 0, y: 0 };
+    let pt = svgRef.current.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+
+    if (mainGroupRef.current) {
+      try {
+        const ctm = mainGroupRef.current.getScreenCTM();
+        if (ctm) pt = pt.matrixTransform(ctm.inverse());
+      } catch (err) {}
+    } else {
+      const rect = svgRef.current.getBoundingClientRect();
+      pt.x -= rect.left;
+      pt.y -= rect.top;
+    }
+    return { x: pt.x, y: pt.y };
+  }, [svgRef, mainGroupRef]);
+
+  const getScreenCoordinates = useCallback((e) => {
+    if (!svgRef.current) return { x: 0, y: 0 };
     const rect = svgRef.current.getBoundingClientRect();
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   }, [svgRef]);
 
   const handlePointerDown = useCallback((e) => {
-    activePointers.current.set(e.pointerId, getCoordinates(e));
+    activePointers.current.set(e.pointerId, { raw: getScreenCoordinates(e), transformed: getCoordinates(e) });
     if (svgRef.current) svgRef.current.setPointerCapture(e.pointerId);
 
-    if (activePointers.current.size === 2 && bgImage.url) {
+    if (activePointers.current.size === 2) {
       setIsDrawing(false); setCurrentStroke([]);
-      const pts = Array.from(activePointers.current.values());
-      const state = calculateNewBgImageState(pts, bgImage, null);
-      gestureStart.current = { imgX: bgImage.x, imgY: bgImage.y, imgScale: bgImage.scale, imgAngle: bgImage.angle, ...state };
+      const pts = Array.from(activePointers.current.values()).map(p => p.raw);
+
+      const stateCanvas = calculateNewCanvasState(pts, canvasTransform, null);
+      const stateBg = calculateNewBgImageState(pts, bgImage, null);
+
+      gestureStart.current = {
+        canX: canvasTransform.x, canY: canvasTransform.y, canScale: canvasTransform.scale, canAngle: canvasTransform.angle,
+        imgX: bgImage.x, imgY: bgImage.y, imgScale: bgImage.scale, imgAngle: bgImage.angle,
+        ...stateCanvas,
+        ...stateBg
+      };
+    }
+    else if (activePointers.current.size === 1 && activeTool === 'pan') {
+       setIsDrawing(false); setCurrentStroke([]);
+       const pt = getScreenCoordinates(e);
+       gestureStart.current = {
+         canX: canvasTransform.x, canY: canvasTransform.y,
+         imgX: bgImage.x, imgY: bgImage.y,
+         startX: pt.x, startY: pt.y
+       };
     }
     else if (activePointers.current.size === 1 && (activeTool === 'snapper' || activeTool === 'smoother')) {
       setIsDrawing(true); setCurrentStroke([getCoordinates(e)]);
     }
-  }, [getCoordinates, activeTool, bgImage]);
+  }, [getCoordinates, getScreenCoordinates, activeTool, bgImage, canvasTransform]);
 
   const handlePointerMove = useCallback((e) => {
     if (!activePointers.current.has(e.pointerId)) return;
-    activePointers.current.set(e.pointerId, getCoordinates(e));
+    activePointers.current.set(e.pointerId, { raw: getScreenCoordinates(e), transformed: getCoordinates(e) });
 
-    if (activePointers.current.size === 2 && bgImage.url && gestureStart.current) {
-      const pts = Array.from(activePointers.current.values());
-      const newState = calculateNewBgImageState(pts, bgImage, gestureStart.current);
-      setBgImage(newState);
+    if (activePointers.current.size === 2 && gestureStart.current) {
+      const pts = Array.from(activePointers.current.values()).map(p => p.raw);
+      if (transformTarget === 'canvas') {
+        const newState = calculateNewCanvasState(pts, canvasTransform, gestureStart.current);
+        setCanvasTransform(newState);
+      } else if (transformTarget === 'background' && bgImage.url) {
+        const newState = calculateNewBgImageState(pts, bgImage, gestureStart.current);
+        setBgImage(newState);
+      }
+    }
+    else if (activePointers.current.size === 1 && activeTool === 'pan' && gestureStart.current) {
+      const pt = getScreenCoordinates(e);
+      const dx = pt.x - gestureStart.current.startX;
+      const dy = pt.y - gestureStart.current.startY;
+      if (transformTarget === 'canvas') {
+        setCanvasTransform(prev => ({ ...prev, x: gestureStart.current.canX + dx, y: gestureStart.current.canY + dy }));
+      } else if (transformTarget === 'background' && bgImage.url) {
+        setBgImage(prev => ({ ...prev, x: gestureStart.current.imgX + dx / canvasTransform.scale, y: gestureStart.current.imgY + dy / canvasTransform.scale }));
+      }
     }
     else if (activePointers.current.size === 1 && isDrawing) {
       const pt = getCoordinates(e);
@@ -64,7 +98,7 @@ export default function useDrawing(svgRef, activeTool, globalColor, smoothAmount
         return prev;
       });
     }
-  }, [getCoordinates, isDrawing, bgImage, setBgImage]);
+  }, [getCoordinates, getScreenCoordinates, isDrawing, bgImage, setBgImage, activeTool, transformTarget, canvasTransform, setCanvasTransform]);
 
   const handlePointerUp = useCallback((e) => {
     activePointers.current.delete(e.pointerId);

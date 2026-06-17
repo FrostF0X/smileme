@@ -1,7 +1,7 @@
 import React from 'react';
 import { IconSettings, IconPattern, IconFilePlus } from '../icons/icons';
 
-export default function RightPanel({ showRightPanel, setShowRightPanel, bgImage, setBgImage, activeTool, activeShape, updateSelectedShape, patternInputRef, svgRef, traceConfig, setTraceConfig, handleTrace, isTracing }) {
+export default function RightPanel({ showRightPanel, setShowRightPanel, bgImage, setBgImage, activeTool, activeShape, updateSelectedShape, patternInputRef, svgRef, traceConfig, setTraceConfig, handleTrace, isTracing, transformTarget, setTransformTarget }) {
   if (!showRightPanel || (!bgImage.url && !(activeTool === 'select' && activeShape))) return null;
 
   return (
@@ -9,6 +9,14 @@ export default function RightPanel({ showRightPanel, setShowRightPanel, bgImage,
       <div className="flex justify-between items-center mb-6">
         <h3 className="font-bold text-slate-800 flex items-center gap-2"><IconSettings /> Opcje</h3>
         <button onClick={() => setShowRightPanel(false)} className="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+      </div>
+
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-4">
+        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Cel gestów</h4>
+        <div className="flex gap-2">
+          <button onClick={() => setTransformTarget('canvas')} className={`flex-1 text-xs py-2 font-medium rounded-lg transition-colors ${transformTarget === 'canvas' ? 'bg-sky-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>Ekran</button>
+          <button onClick={() => setTransformTarget('background')} disabled={!bgImage.url} className={`flex-1 text-xs py-2 font-medium rounded-lg transition-colors ${transformTarget === 'background' ? 'bg-emerald-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-50'}`}>Tło</button>
+        </div>
       </div>
 
       {bgImage.url && (
