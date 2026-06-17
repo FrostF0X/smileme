@@ -71,3 +71,45 @@ export const processBezierSmoother = (points, strokeColor, amount, forceClosed) 
   const svgPathD = pointsToBezierSVG(simplifiedPoints, isClosed);
   return new Path({ type: 'bezierPath', d: svgPathD, color: strokeColor });
 };
+
+export const pointInPolygon = (point, vs) => {
+  let x = point.x, y = point.y, inside = false;
+  for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+    let xi = vs[i].x, yi = vs[i].y, xj = vs[j].x, yj = vs[j].y;
+    let intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+    if (intersect) inside = !inside;
+  }
+  return inside;
+};
+
+export const getShapePoints = (shape) => {
+  if (shape.type === 'ellipse') {
+    return [
+      { x: shape.cx - shape.rx, y: shape.cy - shape.ry },
+      { x: shape.cx + shape.rx, y: shape.cy - shape.ry },
+      { x: shape.cx + shape.rx, y: shape.cy + shape.ry },
+      { x: shape.cx - shape.rx, y: shape.cy + shape.ry },
+      { x: shape.cx, y: shape.cy }
+    ];
+  } else if (shape.type === 'rawPath') {
+    return shape.points;
+  } else if (shape.type === 'bezierPath' && shape.d) {
+    const parts = shape.d.split(/[ ,]+/);
+    const pts = [];
+    for (let i = 0; i < parts.length; i++) {
+      const p = parts[i];
+      if (!isNaN(p) && i > 0 && ['M','L','C'].includes(parts[i-2] || parts[i-3] || parts[i-4])) {
+        // Just extract numbers roughly to get bounding box/sample points
+      }
+    }
+    // Better way: parse simple M x,y or C ... x,y
+    const coords = shape.d.match(/-?\d+\.?\d*/g);
+    if (coords) {
+      for (let i = 0; i < coords.length; i += 2) {
+        pts.push({ x: parseFloat(coords[i]), y: parseFloat(coords[i+1]) });
+      }
+    }
+    return pts;
+  }
+  return [];
+};
