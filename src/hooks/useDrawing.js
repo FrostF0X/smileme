@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { processSnapper, processBezierSmoother } from '../utils/shapeProcessor';
 import { calculateNewCanvasState, calculateNewBgImageState } from '../utils/transformUtils';
 
-export default function useDrawing(svgRef, activeTool, globalColor, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage, canvasTransform, setCanvasTransform, transformTarget, mainGroupRef) {
+export default function useDrawing(svgRef, activeTool, globalColor, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage, canvasTransform, setCanvasTransform, transformTarget, mainGroupRef, onLassoComplete) {
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentStroke, setCurrentStroke] = useState([]);
   const activePointers = useRef(new Map());
@@ -60,7 +60,7 @@ export default function useDrawing(svgRef, activeTool, globalColor, smoothAmount
          startX: pt.x, startY: pt.y
        };
     }
-    else if (activePointers.current.size === 1 && (activeTool === 'snapper' || activeTool === 'smoother')) {
+    else if (activePointers.current.size === 1 && (activeTool === 'snapper' || activeTool === 'smoother' || activeTool === 'select')) {
       setIsDrawing(true); setCurrentStroke([getCoordinates(e)]);
     }
   }, [getCoordinates, getScreenCoordinates, activeTool, bgImage, canvasTransform]);
@@ -114,7 +114,13 @@ export default function useDrawing(svgRef, activeTool, globalColor, smoothAmount
       gestureStart.current = null;
       if (isDrawing) {
         setIsDrawing(false);
-        if (currentStroke.length > 4) {
+        if (activeTool === 'select') {
+          if (currentStroke.length > 4 && onLassoComplete) {
+            onLassoComplete(currentStroke);
+          } else if (currentStroke.length <= 4 && onLassoComplete) {
+            onLassoComplete([]);
+          }
+        } else if (currentStroke.length > 4) {
           try {
             let newShape = activeTool === 'snapper' ? processSnapper(currentStroke, globalColor) : processBezierSmoother(currentStroke, globalColor, smoothAmount, forceCloseShape);
             commitShapes([...shapes, newShape]);
@@ -123,7 +129,7 @@ export default function useDrawing(svgRef, activeTool, globalColor, smoothAmount
         setCurrentStroke([]);
       }
     }
-  }, [isDrawing, currentStroke, activeTool, globalColor, smoothAmount, forceCloseShape, commitShapes, shapes, svgRef]);
+  }, [isDrawing, currentStroke, activeTool, globalColor, smoothAmount, forceCloseShape, commitShapes, shapes, svgRef, onLassoComplete]);
 
   return { isDrawing, currentStroke, handlePointerDown, handlePointerMove, handlePointerUp };
 }
