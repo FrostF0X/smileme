@@ -36,14 +36,14 @@ export default function ToolbarTop({ activeTool, globalColor, setGlobalColor, fo
   return (
     <div className="h-14 bg-white border-b border-slate-300 flex items-center justify-between px-4 z-20 shadow-sm shrink-0">
       <div className="flex items-center gap-6 overflow-x-auto">
-        {(activeTool === 'smoother' || activeTool === 'snapper') && (
+        {(activeTool === 'smoother' || activeTool === 'snapper' || activeTool === 'drawer') && (
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 shrink-0">
               {colors.map(c => (
                 <button key={c} onClick={() => setGlobalColor(c)} className={`w-6 h-6 rounded-full border ${globalColor === c ? 'scale-110 ring-2 ring-offset-1 ring-slate-400 border-transparent' : 'border-slate-300 hover:scale-110'}`} style={{ backgroundColor: c }} />
               ))}
             </div>
-            {activeTool === 'smoother' && <SmoothControls forceCloseShape={forceCloseShape} setForceCloseShape={setForceCloseShape} smoothAmount={smoothAmount} setSmoothAmount={setSmoothAmount} />}
+            {(activeTool === 'smoother' || activeTool === 'drawer') && <SmoothControls forceCloseShape={forceCloseShape} setForceCloseShape={setForceCloseShape} smoothAmount={smoothAmount} setSmoothAmount={setSmoothAmount} />}
           </div>
         )}
         {activeTool === 'select' && !activeShape && (<span className="text-sm font-medium text-slate-500">Wybierz kształt na płótnie, aby go edytować.</span>)}
