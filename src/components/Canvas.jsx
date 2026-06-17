@@ -17,7 +17,7 @@ export default function Canvas({
 
       <svg
         ref={svgRef}
-        className={`w-full h-full touch-none block ${activeTool === 'eraser' ? 'eraser-mode' : activeTool === 'select' ? 'select-mode' : 'cursor-crosshair'}`}
+        className={`w-full h-full touch-none block overflow-visible ${activeTool === 'eraser' ? 'eraser-mode' : activeTool === 'select' ? 'select-mode' : 'cursor-crosshair'}`}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
