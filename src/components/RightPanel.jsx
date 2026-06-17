@@ -1,7 +1,7 @@
 import React from 'react';
 import { IconSettings, IconPattern, IconFilePlus } from '../icons/icons';
 
-export default function RightPanel({ showRightPanel, setShowRightPanel, bgImage, setBgImage, activeTool, activeShape, updateSelectedShape, patternInputRef, svgRef }) {
+export default function RightPanel({ showRightPanel, setShowRightPanel, bgImage, setBgImage, activeTool, activeShape, updateSelectedShape, patternInputRef, svgRef, traceConfig, setTraceConfig, handleTrace, isTracing }) {
   if (!showRightPanel || (!bgImage.url && !(activeTool === 'select' && activeShape))) return null;
 
   return (
@@ -24,6 +24,18 @@ export default function RightPanel({ showRightPanel, setShowRightPanel, bgImage,
             }} className="flex-1 text-xs py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-colors">Wyśrodkuj</button>
             <button onClick={() => { setBgImage({ url: null }); setShowRightPanel(false); }} className="flex-1 text-xs py-2 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-lg transition-colors">Usuń Tło</button>
           </div>
+
+        <div className="bg-indigo-50 p-4 rounded-xl shadow-sm border border-indigo-200 mb-4 mt-4">
+          <h4 className="text-xs font-bold text-indigo-700 uppercase tracking-wider mb-3">Wektoryzacja (Potrace)</h4>
+          <div className="flex justify-between text-xs mb-2 text-slate-600"><span>Ilość warstw</span><span className="font-bold text-indigo-600">{traceConfig?.layers}</span></div>
+          <input type="range" min="1" max="10" step="1" value={traceConfig?.layers || 1} onChange={(e) => setTraceConfig(prev => ({...prev, layers: parseInt(e.target.value)}))} className="w-full mb-3 accent-indigo-500" />
+          <div className="flex justify-between text-xs mb-2 text-slate-600"><span>Usuwanie szumu</span><span className="font-bold text-indigo-600">{traceConfig?.turdsize}</span></div>
+          <input type="range" min="0" max="10" step="1" value={traceConfig?.turdsize || 2} onChange={(e) => setTraceConfig(prev => ({...prev, turdsize: parseInt(e.target.value)}))} className="w-full mb-4 accent-indigo-500" />
+          <button onClick={handleTrace} disabled={isTracing} className="w-full text-sm py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50">
+            {isTracing ? 'Wektoryzowanie...' : 'Wektoryzuj (Trace)'}
+          </button>
+        </div>
+
         </div>
       )}
 
