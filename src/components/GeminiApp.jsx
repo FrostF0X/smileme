@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
-import { GoogleGenAI } from '@google/genai';
 
 export default function GeminiApp({ onClose, setBgImage }) {
   const [userToken, setUserToken] = useState(null);
@@ -31,23 +30,32 @@ export default function GeminiApp({ onClose, setBgImage }) {
     setError(null);
 
     try {
-      const ai = new GoogleGenAI({
-        apiKey: 'OAuth-Token-Mode',
-        extraHeaders: {
-          'Authorization': `Bearer ${userToken}`
+      const response = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userToken}`
+          },
+          body: JSON.stringify({
+            instances: [{ prompt: prompt }],
+            parameters: {
+              sampleCount: 1,
+              outputOptions: { mimeType: 'image/jpeg' }
+            }
+          })
         }
-      });
+      );
 
-      const response = await ai.models.generateImages({
-        model: 'imagen-3.0-generate-002',
-        prompt: prompt,
-        config: {
-          numberOfImages: 1,
-          outputMimeType: 'image/jpeg',
-        }
-      });
+      const data = await response.json();
 
-      const imageBytes = response?.generatedImages?.[0]?.image?.imageBytes;
+      if (!response.ok) {
+        throw new Error(data?.error?.message || "Błąd generowania obrazu");
+      }
+
+      const imageBytes = data?.predictions?.[0]?.bytesBase64Encoded;
+
       if (imageBytes) {
         const dataUrl = `data:image/jpeg;base64,${imageBytes}`;
 

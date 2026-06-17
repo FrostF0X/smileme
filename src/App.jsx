@@ -9,6 +9,7 @@ import useDrawing from './hooks/useDrawing';
 import { exportCleanSVG } from './utils/svgExport';
 import { handlePatternUploadEvent, handleImageChangeEvent, handleFileChangeEvent } from './utils/fileHandlers';
 import { traceImageMultipleLayers } from './utils/traceUtils';
+import { pointInPolygon, getShapePoints } from './utils/shapeProcessor';
 
 export default function App() {
   const svgRef = useRef(null);
@@ -36,10 +37,22 @@ export default function App() {
     } catch (e) { }
   }, [historyObj]);
 
-  const commitShapes = (newShapesArray) => setHistoryObj(historyObj.commit(newShapesArray));
-  const commitShapesFunctional = (updater) => {
-    setHistoryObj((prev) => prev.commit(updater(prev.getCurrentShapes())));
+  const commitShapes = (newShapesArray, replace = false) => {
+    setHistoryObj(prev => {
+      const curr = prev.getCurrentShapes();
+      if (curr.length === newShapesArray.length && curr.every((s, i) => s === newShapesArray[i])) return prev;
+      return prev.commit(newShapesArray, replace);
+    });
   };
+  const commitShapesFunctional = (updater, replace = false) => {
+    setHistoryObj((prev) => {
+      const curr = prev.getCurrentShapes();
+      const next = updater(curr);
+      if (curr.length === next.length && curr.every((s, i) => s === next[i])) return prev;
+      return prev.commit(next, replace);
+    });
+  };
+  const erasingGesture = useRef({ active: false, hasErased: false });
   const undo = () => setHistoryObj(historyObj.undo());
   const redo = () => setHistoryObj(historyObj.redo());
 
@@ -48,7 +61,7 @@ export default function App() {
   const [forceCloseShape, setForceCloseShape] = useState(true);
   const [globalColor, setGlobalColor] = useState('#000000');
   const [showRightPanel, setShowRightPanel] = useState(false);
-  const [selectedShapeIndex, setSelectedShapeIndex] = useState(null);
+  const [selectedShapeIndices, setSelectedShapeIndices] = useState([]);
   const [bgImage, setBgImage] = useState({ url: null, width: 0, height: 0, x: 0, y: 0, scale: 1, angle: 0, opacity: 0.7 });
   const [traceConfig, setTraceConfig] = useState({ layers: 1, turdsize: 2, turnpolicy: 'minority' });
   const [isTracing, setIsTracing] = useState(false);
@@ -66,29 +79,92 @@ export default function App() {
     setIsTracing(false);
   };
 
+  const onLassoComplete = (polygonPoints) => {
+    if (!polygonPoints || polygonPoints.length === 0) {
+      setSelectedShapeIndices([]);
+      return;
+    }
+    const selected = [];
+    shapes.forEach((shape, index) => {
+      const shapePoints = getShapePoints(shape);
+      if (shapePoints && shapePoints.length > 0) {
+        // If at least one point is inside the lasso
+        if (shapePoints.some(pt => pointInPolygon(pt, polygonPoints))) {
+          selected.push(index);
+        }
+      }
+    });
+    setSelectedShapeIndices(selected);
+    if (selected.length > 0) setShowRightPanel(true);
+  };
+
   const { isDrawing, currentStroke, handlePointerDown, handlePointerMove, handlePointerUp } = useDrawing(
-    svgRef, activeTool, globalColor, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage, canvasTransform, setCanvasTransform, transformTarget, mainGroupRef
+    svgRef, activeTool, globalColor, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage, canvasTransform, setCanvasTransform, transformTarget, mainGroupRef, onLassoComplete
   );
 
-  useEffect(() => { if (activeTool !== 'select') setSelectedShapeIndex(null); }, [activeTool]);
+  useEffect(() => { if (activeTool !== 'select') setSelectedShapeIndices([]); }, [activeTool]);
 
   const handleShapeInteraction = (e, shape, index) => {
-    if (activeTool === 'eraser') {
-      if (e.buttons === 1 || e.type === 'pointerdown') {
-        e.stopPropagation();
-        commitShapesFunctional((prevShapes) => prevShapes.filter(s => s !== shape));
-      }
-    } else if (activeTool === 'select' && e.type === 'pointerdown') {
+    if (activeTool === 'select' && e.type === 'pointerdown') {
       e.stopPropagation();
-      setSelectedShapeIndex(index);
+      if (!selectedShapeIndices.includes(index)) {
+        setSelectedShapeIndices([index]);
+      }
       setShowRightPanel(true);
     }
   };
 
+  const handleEraserMove = (e) => {
+    if (!erasingGesture.current.active) return;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    if (!el) return;
+    const gEl = el.closest('g[data-shape-index]');
+    if (gEl) {
+      const idx = parseInt(gEl.getAttribute('data-shape-index'), 10);
+      if (!isNaN(idx) && shapes[idx]) {
+        const shapeToErase = shapes[idx];
+        const replace = erasingGesture.current.hasErased;
+        commitShapesFunctional((prev) => {
+          return prev.filter(s => s !== shapeToErase);
+        }, replace);
+        erasingGesture.current.hasErased = true;
+      }
+    }
+  };
+
+  const handleCanvasPointerDown = (e) => {
+    if (activeTool === 'eraser') {
+      erasingGesture.current = { active: true, hasErased: false };
+      handleEraserMove(e);
+      if (svgRef.current) svgRef.current.setPointerCapture(e.pointerId);
+    } else {
+      handlePointerDown(e);
+    }
+  };
+
+  const handleCanvasPointerMove = (e) => {
+    if (activeTool === 'eraser') {
+      handleEraserMove(e);
+    } else {
+      handlePointerMove(e);
+    }
+  };
+
+  const handleCanvasPointerUp = (e) => {
+    if (activeTool === 'eraser') {
+      erasingGesture.current.active = false;
+      if (svgRef.current) svgRef.current.releasePointerCapture(e.pointerId);
+    } else {
+      handlePointerUp(e);
+    }
+  };
+
   const updateSelectedShape = (updates) => {
-    if (selectedShapeIndex === null) return;
+    if (selectedShapeIndices.length === 0) return;
     const newShapes = [...shapes];
-    newShapes[selectedShapeIndex] = { ...newShapes[selectedShapeIndex], ...updates };
+    selectedShapeIndices.forEach(idx => {
+      newShapes[idx] = { ...newShapes[idx], ...updates };
+    });
     commitShapes(newShapes);
   };
 
@@ -105,7 +181,7 @@ export default function App() {
       <div className="flex-1 flex flex-col relative overflow-hidden">
         <ToolbarTop
           activeTool={activeTool} globalColor={globalColor} setGlobalColor={setGlobalColor} forceCloseShape={forceCloseShape} setForceCloseShape={setForceCloseShape}
-          smoothAmount={smoothAmount} setSmoothAmount={setSmoothAmount} activeShape={selectedShapeIndex !== null ? shapes[selectedShapeIndex] : null}
+          smoothAmount={smoothAmount} setSmoothAmount={setSmoothAmount} activeShape={selectedShapeIndices.length > 0 ? shapes[selectedShapeIndices[0]] : null}
           updateSelectedShape={updateSelectedShape} setShowRightPanel={setShowRightPanel}
           undo={undo} redo={redo} canUndo={historyObj.canUndo()} canRedo={historyObj.canRedo()}
           handleClear={() => { if (window.confirm("Wyczyścić wektory?")) commitShapes([]); }} fileInputRef={fileInputRef}
@@ -115,12 +191,12 @@ export default function App() {
         <div className="flex-1 relative flex">
           <Canvas
             svgRef={svgRef} mainGroupRef={mainGroupRef} canvasTransform={canvasTransform} shapes={shapes} currentStroke={currentStroke} bgImage={bgImage} isDrawing={isDrawing} activeTool={activeTool} globalColor={globalColor}
-            handlePointerDown={handlePointerDown} handlePointerMove={handlePointerMove} handlePointerUp={handlePointerUp}
-            selectedShapeIndex={selectedShapeIndex} handleShapeInteraction={handleShapeInteraction}
+            handlePointerDown={handleCanvasPointerDown} handlePointerMove={handleCanvasPointerMove} handlePointerUp={handleCanvasPointerUp}
+            selectedShapeIndices={selectedShapeIndices} handleShapeInteraction={handleShapeInteraction}
           />
           <RightPanel
             showRightPanel={showRightPanel} setShowRightPanel={setShowRightPanel} bgImage={bgImage} setBgImage={setBgImage}
-            activeTool={activeTool} activeShape={selectedShapeIndex !== null ? shapes[selectedShapeIndex] : null}
+            activeTool={activeTool} activeShape={selectedShapeIndices.length > 0 ? shapes[selectedShapeIndices[0]] : null}
             updateSelectedShape={updateSelectedShape} patternInputRef={patternInputRef} svgRef={svgRef}
             traceConfig={traceConfig} setTraceConfig={setTraceConfig} handleTrace={handleTrace} isTracing={isTracing}
             transformTarget={transformTarget} setTransformTarget={setTransformTarget}

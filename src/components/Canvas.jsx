@@ -5,7 +5,7 @@ import PatternDefs from './PatternDefs';
 export default function Canvas({
   svgRef, mainGroupRef, canvasTransform, shapes, currentStroke, bgImage, isDrawing, activeTool, globalColor,
   handlePointerDown, handlePointerMove, handlePointerUp,
-  selectedShapeIndex, handleShapeInteraction
+  selectedShapeIndices, handleShapeInteraction
 }) {
   const getCursorClass = () => {
     if (activeTool === 'eraser') return 'eraser-mode';
@@ -44,7 +44,7 @@ export default function Canvas({
             key={i}
             shape={shape}
             index={i}
-            isSelected={activeTool === 'select' && selectedShapeIndex === i}
+            isSelected={activeTool === 'select' && selectedShapeIndices && selectedShapeIndices.includes(i)}
             activeTool={activeTool}
             handleShapeInteraction={handleShapeInteraction}
           />
@@ -52,6 +52,9 @@ export default function Canvas({
 
           {currentStroke.length > 0 && activeTool !== 'eraser' && activeTool !== 'select' && activeTool !== 'pan' && (
             <path d={`M ${currentStroke.map(p => `${p.x},${p.y}`).join(' L ')}`} fill="none" stroke={globalColor} strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" opacity={0.6} />
+          )}
+          {currentStroke.length > 0 && activeTool === 'select' && (
+            <path d={`M ${currentStroke.map(p => `${p.x},${p.y}`).join(' L ')} Z`} fill="rgba(14, 165, 233, 0.1)" stroke="#0ea5e9" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" strokeDasharray="5,5" opacity={0.8} style={{ pointerEvents: 'none' }} />
           )}
         </g>
       </svg>
