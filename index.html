@@ -20,6 +20,9 @@
         }
 
         function showGlobalError(message, source, lineno, colno, error) {
+            // Ignore cross-origin script errors (often happens in Safari PWA/extensions)
+            if (message === 'Script error.' || message === 'Script error') return false;
+
             const loading = document.getElementById('loading');
             if(loading) loading.style.display = 'none';
 
