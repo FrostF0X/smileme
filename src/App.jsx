@@ -4,6 +4,7 @@ import ToolbarLeft from './components/ToolbarLeft';
 import ToolbarTop from './components/ToolbarTop';
 import Canvas from './components/Canvas';
 import RightPanel from './components/RightPanel';
+import GeminiApp from './components/GeminiApp';
 import useDrawing from './hooks/useDrawing';
 import { exportCleanSVG } from './utils/svgExport';
 import { handlePatternUploadEvent, handleImageChangeEvent, handleFileChangeEvent } from './utils/fileHandlers';
@@ -53,6 +54,7 @@ export default function App() {
   const [isTracing, setIsTracing] = useState(false);
   const [canvasTransform, setCanvasTransform] = useState({ x: 0, y: 0, scale: 1, angle: 0 });
   const [transformTarget, setTransformTarget] = useState('canvas');
+  const [showGeminiApp, setShowGeminiApp] = useState(false);
 
   const handleTrace = async () => {
     if (!bgImage.url || isTracing) return;
@@ -96,7 +98,7 @@ export default function App() {
       <input type="file" accept="image/*" ref={imageInputRef} onChange={(e) => handleImageChangeEvent(e, setBgImage, setShowRightPanel, svgRef)} className="hidden" />
       <input type="file" accept=".svg" ref={patternInputRef} onChange={(e) => handlePatternUploadEvent(e, updateSelectedShape)} className="hidden" />
 
-      <ToolbarLeft activeTool={activeTool} setActiveTool={setActiveTool} bgImage={bgImage} setShowRightPanel={setShowRightPanel} imageInputRef={imageInputRef} setCanvasTransform={setCanvasTransform} />
+      <ToolbarLeft activeTool={activeTool} setActiveTool={setActiveTool} bgImage={bgImage} setShowRightPanel={setShowRightPanel} imageInputRef={imageInputRef} setCanvasTransform={setCanvasTransform} setShowGeminiApp={setShowGeminiApp} />
 
       <div className="flex-1 flex flex-col relative overflow-hidden">
         <ToolbarTop
@@ -123,6 +125,7 @@ export default function App() {
           />
         </div>
       </div>
+      {showGeminiApp && <GeminiApp onClose={() => setShowGeminiApp(false)} bgImage={bgImage} setBgImage={setBgImage} />}
     </div>
   );
 }
