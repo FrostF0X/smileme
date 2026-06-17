@@ -7,6 +7,9 @@ export default function GeminiApp({ onClose, setBgImage }) {
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [asyncError, setAsyncError] = useState(null);
+
+  if (asyncError) throw asyncError;
 
   const login = useGoogleLogin({
     onSuccess: (tokenResponse) => {
@@ -78,7 +81,7 @@ export default function GeminiApp({ onClose, setBgImage }) {
       }
     } catch (err) {
       console.error("Generation error:", err);
-      setError("Błąd generowania. Sprawdź konsolę przeglądarki.");
+      setAsyncError(err);
     } finally {
       setLoading(false);
     }
