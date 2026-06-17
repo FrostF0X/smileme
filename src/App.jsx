@@ -36,10 +36,22 @@ export default function App() {
     } catch (e) { }
   }, [historyObj]);
 
-  const commitShapes = (newShapesArray) => setHistoryObj(historyObj.commit(newShapesArray));
-  const commitShapesFunctional = (updater) => {
-    setHistoryObj((prev) => prev.commit(updater(prev.getCurrentShapes())));
+  const commitShapes = (newShapesArray, replace = false) => {
+    setHistoryObj(prev => {
+      const curr = prev.getCurrentShapes();
+      if (curr.length === newShapesArray.length && curr.every((s, i) => s === newShapesArray[i])) return prev;
+      return prev.commit(newShapesArray, replace);
+    });
   };
+  const commitShapesFunctional = (updater, replace = false) => {
+    setHistoryObj((prev) => {
+      const curr = prev.getCurrentShapes();
+      const next = updater(curr);
+      if (curr.length === next.length && curr.every((s, i) => s === next[i])) return prev;
+      return prev.commit(next, replace);
+    });
+  };
+  const erasingGesture = useRef({ active: false, hasErased: false });
   const undo = () => setHistoryObj(historyObj.undo());
   const redo = () => setHistoryObj(historyObj.redo());
 
@@ -73,15 +85,55 @@ export default function App() {
   useEffect(() => { if (activeTool !== 'select') setSelectedShapeIndex(null); }, [activeTool]);
 
   const handleShapeInteraction = (e, shape, index) => {
-    if (activeTool === 'eraser') {
-      if (e.buttons === 1 || e.type === 'pointerdown') {
-        e.stopPropagation();
-        commitShapesFunctional((prevShapes) => prevShapes.filter(s => s !== shape));
-      }
-    } else if (activeTool === 'select' && e.type === 'pointerdown') {
+    if (activeTool === 'select' && e.type === 'pointerdown') {
       e.stopPropagation();
       setSelectedShapeIndex(index);
       setShowRightPanel(true);
+    }
+  };
+
+  const handleEraserMove = (e) => {
+    if (!erasingGesture.current.active) return;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    if (!el) return;
+    const gEl = el.closest('g[data-shape-index]');
+    if (gEl) {
+      const idx = parseInt(gEl.getAttribute('data-shape-index'), 10);
+      if (!isNaN(idx) && shapes[idx]) {
+        const shapeToErase = shapes[idx];
+        const replace = erasingGesture.current.hasErased;
+        commitShapesFunctional((prev) => {
+          return prev.filter(s => s !== shapeToErase);
+        }, replace);
+        erasingGesture.current.hasErased = true;
+      }
+    }
+  };
+
+  const handleCanvasPointerDown = (e) => {
+    if (activeTool === 'eraser') {
+      erasingGesture.current = { active: true, hasErased: false };
+      handleEraserMove(e);
+      if (svgRef.current) svgRef.current.setPointerCapture(e.pointerId);
+    } else {
+      handlePointerDown(e);
+    }
+  };
+
+  const handleCanvasPointerMove = (e) => {
+    if (activeTool === 'eraser') {
+      handleEraserMove(e);
+    } else {
+      handlePointerMove(e);
+    }
+  };
+
+  const handleCanvasPointerUp = (e) => {
+    if (activeTool === 'eraser') {
+      erasingGesture.current.active = false;
+      if (svgRef.current) svgRef.current.releasePointerCapture(e.pointerId);
+    } else {
+      handlePointerUp(e);
     }
   };
 
@@ -115,7 +167,7 @@ export default function App() {
         <div className="flex-1 relative flex">
           <Canvas
             svgRef={svgRef} mainGroupRef={mainGroupRef} canvasTransform={canvasTransform} shapes={shapes} currentStroke={currentStroke} bgImage={bgImage} isDrawing={isDrawing} activeTool={activeTool} globalColor={globalColor}
-            handlePointerDown={handlePointerDown} handlePointerMove={handlePointerMove} handlePointerUp={handlePointerUp}
+            handlePointerDown={handleCanvasPointerDown} handlePointerMove={handleCanvasPointerMove} handlePointerUp={handleCanvasPointerUp}
             selectedShapeIndex={selectedShapeIndex} handleShapeInteraction={handleShapeInteraction}
           />
           <RightPanel
