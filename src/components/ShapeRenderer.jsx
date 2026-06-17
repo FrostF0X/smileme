@@ -1,11 +1,12 @@
 import React from 'react';
 import { getPatternDetails } from '../utils/svgExport';
 
-export default function ShapeRenderer({ shape, index, isSelected, activeTool, handleShapeClick }) {
+export default function ShapeRenderer({ shape, index, isSelected, activeTool, handleShapeInteraction }) {
   const shapeProps = {
     fill: shape.fillPattern ? `url(#pat-${index})` : "none",
     stroke: shape.color, strokeWidth: 4, strokeLinecap: "round", strokeLinejoin: "round",
-    onPointerDown: (e) => handleShapeClick(e, index),
+    onPointerDown: (e) => handleShapeInteraction(e, shape, index),
+    onPointerEnter: (e) => handleShapeInteraction(e, shape, index),
     style: { pointerEvents: (activeTool === 'eraser' || activeTool === 'select') ? 'all' : 'none' },
     className: isSelected ? "opacity-80" : ""
   };

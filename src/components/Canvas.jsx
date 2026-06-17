@@ -5,7 +5,7 @@ import PatternDefs from './PatternDefs';
 export default function Canvas({
   svgRef, shapes, currentStroke, bgImage, isDrawing, activeTool, globalColor,
   handlePointerDown, handlePointerMove, handlePointerUp,
-  selectedShapeIndex, handleShapeClick
+  selectedShapeIndex, handleShapeInteraction
 }) {
   return (
     <div className="flex-1 relative overflow-hidden bg-white">
@@ -39,7 +39,7 @@ export default function Canvas({
             index={i}
             isSelected={activeTool === 'select' && selectedShapeIndex === i}
             activeTool={activeTool}
-            handleShapeClick={handleShapeClick}
+            handleShapeInteraction={handleShapeInteraction}
           />
         ))}
 
