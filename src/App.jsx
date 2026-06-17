@@ -15,6 +15,7 @@ export default function App() {
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
   const patternInputRef = useRef(null);
+  const mainGroupRef = useRef(null);
 
   const [historyObj, setHistoryObj] = useState(() => {
     try {
@@ -51,6 +52,8 @@ export default function App() {
   const [bgImage, setBgImage] = useState({ url: null, width: 0, height: 0, x: 0, y: 0, scale: 1, angle: 0, opacity: 0.7 });
   const [traceConfig, setTraceConfig] = useState({ layers: 1, turdsize: 2, turnpolicy: 'minority' });
   const [isTracing, setIsTracing] = useState(false);
+  const [canvasTransform, setCanvasTransform] = useState({ x: 0, y: 0, scale: 1, angle: 0 });
+  const [transformTarget, setTransformTarget] = useState('canvas');
   const [showGeminiApp, setShowGeminiApp] = useState(false);
 
   const handleTrace = async () => {
@@ -64,7 +67,7 @@ export default function App() {
   };
 
   const { isDrawing, currentStroke, handlePointerDown, handlePointerMove, handlePointerUp } = useDrawing(
-    svgRef, activeTool, globalColor, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage
+    svgRef, activeTool, globalColor, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage, canvasTransform, setCanvasTransform, transformTarget, mainGroupRef
   );
 
   useEffect(() => { if (activeTool !== 'select') setSelectedShapeIndex(null); }, [activeTool]);
@@ -95,9 +98,9 @@ export default function App() {
       <input type="file" accept="image/*" ref={imageInputRef} onChange={(e) => handleImageChangeEvent(e, setBgImage, setShowRightPanel, svgRef)} className="hidden" />
       <input type="file" accept=".svg" ref={patternInputRef} onChange={(e) => handlePatternUploadEvent(e, updateSelectedShape)} className="hidden" />
 
-      <ToolbarLeft activeTool={activeTool} setActiveTool={setActiveTool} bgImage={bgImage} setShowRightPanel={setShowRightPanel} imageInputRef={imageInputRef} setShowGeminiApp={setShowGeminiApp} />
+      <ToolbarLeft activeTool={activeTool} setActiveTool={setActiveTool} bgImage={bgImage} setShowRightPanel={setShowRightPanel} imageInputRef={imageInputRef} setCanvasTransform={setCanvasTransform} setShowGeminiApp={setShowGeminiApp} />
 
-      {showGeminiApp && <GeminiApp onClose={() => setShowGeminiApp(false)} setBgImage={setBgImage} />}
+      {showGeminiApp && <GeminiApp onClose={() => setShowGeminiApp(false)} bgImage={bgImage} setBgImage={setBgImage} />}
 
       <div className="flex-1 flex flex-col relative overflow-hidden">
         <ToolbarTop
@@ -111,7 +114,7 @@ export default function App() {
 
         <div className="flex-1 relative flex">
           <Canvas
-            svgRef={svgRef} shapes={shapes} currentStroke={currentStroke} bgImage={bgImage} isDrawing={isDrawing} activeTool={activeTool} globalColor={globalColor}
+            svgRef={svgRef} mainGroupRef={mainGroupRef} canvasTransform={canvasTransform} shapes={shapes} currentStroke={currentStroke} bgImage={bgImage} isDrawing={isDrawing} activeTool={activeTool} globalColor={globalColor}
             handlePointerDown={handlePointerDown} handlePointerMove={handlePointerMove} handlePointerUp={handlePointerUp}
             selectedShapeIndex={selectedShapeIndex} handleShapeInteraction={handleShapeInteraction}
           />
@@ -120,6 +123,7 @@ export default function App() {
             activeTool={activeTool} activeShape={selectedShapeIndex !== null ? shapes[selectedShapeIndex] : null}
             updateSelectedShape={updateSelectedShape} patternInputRef={patternInputRef} svgRef={svgRef}
             traceConfig={traceConfig} setTraceConfig={setTraceConfig} handleTrace={handleTrace} isTracing={isTracing}
+            transformTarget={transformTarget} setTransformTarget={setTransformTarget}
           />
         </div>
       </div>
