@@ -35,6 +35,9 @@ export default function App() {
   }, [historyObj]);
 
   const commitShapes = (newShapesArray) => setHistoryObj(historyObj.commit(newShapesArray));
+  const commitShapesFunctional = (updater) => {
+    setHistoryObj((prev) => prev.commit(updater(prev.getCurrentShapes())));
+  };
   const undo = () => setHistoryObj(historyObj.undo());
   const redo = () => setHistoryObj(historyObj.redo());
 
@@ -64,11 +67,13 @@ export default function App() {
 
   useEffect(() => { if (activeTool !== 'select') setSelectedShapeIndex(null); }, [activeTool]);
 
-  const handleShapeClick = (e, index) => {
+  const handleShapeInteraction = (e, shape, index) => {
     if (activeTool === 'eraser') {
-      e.stopPropagation();
-      commitShapes(shapes.filter((_, i) => i !== index));
-    } else if (activeTool === 'select') {
+      if (e.buttons === 1 || e.type === 'pointerdown') {
+        e.stopPropagation();
+        commitShapesFunctional((prevShapes) => prevShapes.filter(s => s !== shape));
+      }
+    } else if (activeTool === 'select' && e.type === 'pointerdown') {
       e.stopPropagation();
       setSelectedShapeIndex(index);
       setShowRightPanel(true);
@@ -104,7 +109,7 @@ export default function App() {
           <Canvas
             svgRef={svgRef} shapes={shapes} currentStroke={currentStroke} bgImage={bgImage} isDrawing={isDrawing} activeTool={activeTool} globalColor={globalColor}
             handlePointerDown={handlePointerDown} handlePointerMove={handlePointerMove} handlePointerUp={handlePointerUp}
-            selectedShapeIndex={selectedShapeIndex} handleShapeClick={handleShapeClick}
+            selectedShapeIndex={selectedShapeIndex} handleShapeInteraction={handleShapeInteraction}
           />
           <RightPanel
             showRightPanel={showRightPanel} setShowRightPanel={setShowRightPanel} bgImage={bgImage} setBgImage={setBgImage}

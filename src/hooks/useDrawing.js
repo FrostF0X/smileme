@@ -33,7 +33,7 @@ export default function useDrawing(svgRef, activeTool, globalColor, smoothAmount
 
   const handlePointerDown = useCallback((e) => {
     activePointers.current.set(e.pointerId, getCoordinates(e));
-    if (svgRef.current) svgRef.current.setPointerCapture(e.pointerId);
+    if (svgRef.current && activeTool !== 'eraser') svgRef.current.setPointerCapture(e.pointerId);
 
     if (activePointers.current.size === 2 && bgImage.url) {
       setIsDrawing(false); setCurrentStroke([]);
@@ -68,7 +68,11 @@ export default function useDrawing(svgRef, activeTool, globalColor, smoothAmount
 
   const handlePointerUp = useCallback((e) => {
     activePointers.current.delete(e.pointerId);
-    if (svgRef.current) svgRef.current.releasePointerCapture(e.pointerId);
+    if (svgRef.current) {
+      try {
+        svgRef.current.releasePointerCapture(e.pointerId);
+      } catch (err) {}
+    }
 
     if (activePointers.current.size === 0) {
       gestureStart.current = null;
