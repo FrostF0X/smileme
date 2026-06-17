@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - test
 
 permissions:
   contents: read
@@ -18,60 +17,24 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Checkout main branch
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          path: main_branch
-        continue-on-error: true
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Build main branch
-        run: |
-          if [ -d "main_branch" ] && [ "$(ls -A main_branch)" ]; then
-            cd main_branch
-            npm install
-            npm run build
-          else
-            echo "main branch not found or empty"
-          fi
-
-      - name: Checkout test branch
-        uses: actions/checkout@v4
-        with:
-          ref: test
-          path: test_branch
-        continue-on-error: true
-
-      - name: Build test branch
-        run: |
-          if [ -d "test_branch" ] && [ "$(ls -A test_branch)" ]; then
-            cd test_branch
-            npm install
-            npx vite build --base=/test/
-          else
-            echo "test branch not found or empty"
-          fi
-
-      - name: Prepare artifact
-        run: |
-          mkdir -p final_dist
-          if [ -d "main_branch/dist" ]; then
-            cp -a main_branch/dist/. final_dist/
-          fi
-          if [ -d "test_branch/dist" ]; then
-            mkdir -p final_dist/test
-            cp -a test_branch/dist/. final_dist/test/
-          fi
+      - name: Build project
+        run: npm run build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: final_dist
+          path: .
 
       - name: Deploy to GitHub Pages
         id: deployment
