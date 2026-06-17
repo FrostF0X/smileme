@@ -14,14 +14,23 @@ Aplikacja Rysunkowa PRO to zaawansowana, jednoplikowa (Single-Page Application) 
 
 ## 🛠️ Technologie
 
-Aplikacja nie wymaga skomplikowanego procesu budowania, wszystko działa na żywo wykorzystując dostarczanie za pomocą mechanizmu Content Delivery Network (CDN):
-- **React** i **React DOM** (v18, importowane przez `unpkg.com`)
-- **Babel** (do transpilacji JSX w locie)
-- **TailwindCSS** (do nowoczesnego, responsywnego stylowania, importowane przez CDN)
+Aplikacja jest zbudowana przy użyciu nowoczesnych narzędzi frontendowych:
+- **React** i **React DOM** (v18)
+- **Vite** (jako ultraszybki bundler i serwer deweloperski)
+- **TailwindCSS** (do nowoczesnego, responsywnego stylowania)
 
-## 🚀 Jak uruchomić (Deploy na GitHub Pages)
+## 🚀 Jak uruchomić
 
-Ta aplikacja została zoptymalizowana do łatwego i szybkiego wdrożenia za pośrednictwem **GitHub Pages**. Plik konfiguracyjny `.github/workflows/deploy.yml` automatycznie publikuje najnowszą wersję po dokonaniu każdego `push` do gałęzi `main`. Ponieważ aplikacja składa się wyłącznie ze statycznego pliku HTML (wraz z zapytaniami do zewnętrznych CDN), po prostu należy otworzyć plik `index.html` w ulubionej przeglądarce po sklonowaniu projektu.
+Aby uruchomić aplikację lokalnie, wykonaj następujące kroki:
+
+1. Zainstaluj zależności: `npm install` (lub `npm ci`)
+2. Uruchom serwer deweloperski: `npm run dev`
+3. Aby zbudować aplikację produkcyjną, uruchom: `npm run build`
+4. Zbudowane pliki znajdą się w folderze `dist/`.
+
+### Deploy na GitHub Pages
+
+Projekt jest skonfigurowany do automatycznego wdrażania na GitHub Pages. Plik konfiguracyjny `.github/workflows/deploy.yml` automatycznie instaluje zależności (`npm ci`), buduje projekt (`npm run build`) i publikuje folder `dist/` po każdym `push` do gałęzi `main`.
 
 ---
 _Aplikacja przygotowana jako łatwe, profesjonalne narzędzie wektorowe, dające swobodę ekspresji twórcom, niezależnie od urządzenia, z którego korzystają._
