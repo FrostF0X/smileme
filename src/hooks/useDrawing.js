@@ -81,12 +81,14 @@ export default function useDrawing(svgRef, activeTool, globalColor, smoothAmount
     }
     else if (activePointers.current.size === 1 && activeTool === 'pan' && gestureStart.current) {
       const pt = getScreenCoordinates(e);
-      const dx = pt.x - gestureStart.current.startX;
-      const dy = pt.y - gestureStart.current.startY;
+      const { startX, startY, canX, canY, imgX, imgY } = gestureStart.current;
+      const dx = pt.x - startX;
+      const dy = pt.y - startY;
       if (transformTarget === 'canvas') {
-        setCanvasTransform(prev => ({ ...prev, x: gestureStart.current.canX + dx, y: gestureStart.current.canY + dy }));
+        setCanvasTransform(prev => ({ ...prev, x: canX + dx, y: canY + dy }));
       } else if (transformTarget === 'background' && bgImage.url) {
-        setBgImage(prev => ({ ...prev, x: gestureStart.current.imgX + dx / canvasTransform.scale, y: gestureStart.current.imgY + dy / canvasTransform.scale }));
+        const scale = canvasTransform.scale;
+        setBgImage(prev => ({ ...prev, x: imgX + dx / scale, y: imgY + dy / scale }));
       }
     }
     else if (activePointers.current.size === 1 && isDrawing) {
