@@ -8,8 +8,8 @@ export default class DrawingHistory {
     return this.history[this.step] || [];
   }
 
-  commit(newShapes) {
-    const newHistory = this.history.slice(0, this.step + 1);
+  commit(newShapes, replace = false) {
+    const newHistory = this.history.slice(0, replace ? this.step : this.step + 1);
     newHistory.push(newShapes);
     return new DrawingHistory(newHistory, newHistory.length - 1);
   }

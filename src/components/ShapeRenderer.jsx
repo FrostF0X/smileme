@@ -22,5 +22,5 @@ export default function ShapeRenderer({ shape, index, isSelected, activeTool, ha
   if (shape.type === 'ellipse') renderedShape = <ellipse cx={shape.cx} cy={shape.cy} rx={shape.rx} ry={shape.ry} transform={`rotate(${shape.angle} ${shape.cx} ${shape.cy})`} {...shapeProps} />;
   else renderedShape = <path d={shape.d || `M ${shape.points.map(p => `${p.x},${p.y}`).join(' L ')}`} {...shapeProps} />;
 
-  return <g key={`g-${index}`}>{renderedShape}{selectionOutline}</g>;
+  return <g key={`g-${index}`} data-shape-index={index}>{renderedShape}{selectionOutline}</g>;
 }
