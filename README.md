@@ -9,8 +9,13 @@ Aplikacja Rysunkowa PRO to zaawansowana, jednoplikowa (Single-Page Application) 
 - **Wybieranie i Wypełnianie (Select)**: Pozwala na wybranie konkretnego narysowanego obiektu i zmianę jego koloru obramowania, a także dodanie wypełnienia z zastosowaniem zaawansowanych wzorów (Kropki, Siatka, Paski, a także Własne pliki SVG - `customPatternSvg`).
 - **Gumka (Eraser)**: Pozwala na łatwe kasowanie wskazanych kształtów za pomocą jednego kliknięcia.
 - **Obraz Referencyjny (Kalka)**: Funkcjonalność podkładania dowolnego obrazu graficznego jako tła, z możliwością regulacji jego przezroczystości (krycia), skalowania, i pozycjonowania - służącego jako punkt odniesienia podczas rysowania.
+- **Wektoryzacja Obrazów (Potrace)**: Zaawansowana integracja narzędzia Potrace do automatycznego konwertowania obrazów rastrowych (np. zdjęć) na wektorowe ścieżki SVG z wieloma warstwami kolorów.
+- **Generowanie Tła AI (Imagen)**: Wbudowana integracja z Google Imagen 3 za pośrednictwem bezpośredniego API REST (oraz Google OAuth 2.0), umożliwiająca generowanie niesamowitych teł graficznych bezpośrednio w przeglądarce przy użyciu promptów.
 - **Eksport do SVG (`exportCleanSVG`)**: Możliwość zapisania stworzonego dzieła na dysku w postaci wysokiej jakości, wektorowego pliku `.svg`, zachowującego przezroczystość, kształty i nakładane wzory.
 - **Historia Operacji (Undo/Redo)**: Funkcja cofania (Undo) i ponawiania (Redo) pociągnięć pędzla lub modyfikacji kształtów. Aplikacja zapisuje również stan do pamięci przeglądarki (`localStorage`).
+
+## 📄 Specyfikacja Techniczna
+Więcej szczegółów dotyczących architektury, modeli danych oraz zarządzania stanem znajduje się w dokumencie [SPECIFICATION.md](./SPECIFICATION.md).
 
 ## 🛠️ Technologie
 
