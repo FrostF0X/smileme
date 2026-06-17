@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { processSnapper, processBezierSmoother } from '../utils/shapeProcessor';
+import { processSnapper, processBezierSmoother, processDrawer } from '../utils/shapeProcessor';
 import { calculateNewCanvasState, calculateNewBgImageState } from '../utils/transformUtils';
 
 export default function useDrawing(svgRef, activeTool, globalColor, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage, canvasTransform, setCanvasTransform, transformTarget, mainGroupRef, onLassoComplete) {
@@ -60,7 +60,7 @@ export default function useDrawing(svgRef, activeTool, globalColor, smoothAmount
          startX: pt.x, startY: pt.y
        };
     }
-    else if (activePointers.current.size === 1 && (activeTool === 'snapper' || activeTool === 'smoother' || activeTool === 'select')) {
+    else if (activePointers.current.size === 1 && (activeTool === 'snapper' || activeTool === 'smoother' || activeTool === 'drawer' || activeTool === 'select')) {
       setIsDrawing(true); setCurrentStroke([getCoordinates(e)]);
     }
   }, [getCoordinates, getScreenCoordinates, activeTool, bgImage, canvasTransform]);
@@ -122,7 +122,14 @@ export default function useDrawing(svgRef, activeTool, globalColor, smoothAmount
           }
         } else if (currentStroke.length > 4) {
           try {
-            let newShape = activeTool === 'snapper' ? processSnapper(currentStroke, globalColor) : processBezierSmoother(currentStroke, globalColor, smoothAmount, forceCloseShape);
+            let newShape;
+            if (activeTool === 'snapper') {
+              newShape = processSnapper(currentStroke, globalColor);
+            } else if (activeTool === 'drawer') {
+              newShape = processDrawer(currentStroke, globalColor, smoothAmount, forceCloseShape);
+            } else {
+              newShape = processBezierSmoother(currentStroke, globalColor, smoothAmount, forceCloseShape);
+            }
             commitShapes([...shapes, newShape]);
           } catch (err) { console.error(err); }
         }

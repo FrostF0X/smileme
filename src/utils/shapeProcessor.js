@@ -72,6 +72,15 @@ export const processBezierSmoother = (points, strokeColor, amount, forceClosed) 
   return new Path({ type: 'bezierPath', d: svgPathD, color: strokeColor });
 };
 
+export const processDrawer = (points, strokeColor, amount, forceClosed) => {
+  let pts = [...points];
+  const isClosed = forceClosed && pts.length > 3;
+  if (isClosed) pts.push({ x: pts[0].x, y: pts[0].y });
+  const tolerance = amount === 0 ? 0.5 : (amount / 100) * 20;
+  const simplifiedPoints = simplifyPath(pts, tolerance);
+  return new Path({ type: 'rawPath', points: simplifiedPoints, color: strokeColor });
+};
+
 export const pointInPolygon = (point, vs) => {
   let x = point.x, y = point.y, inside = false;
   for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
