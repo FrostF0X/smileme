@@ -7,6 +7,11 @@ export default class Shape {
     this.patternSpacing = props.patternSpacing || 0;
     this.patternLayout = props.patternLayout || 'grid';
     this.customPatternSvg = props.customPatternSvg || null;
+    this.x = props.x || 0;
+    this.y = props.y || 0;
+    this.rotation = props.rotation || 0;
+    this.scaleX = props.scaleX !== undefined ? props.scaleX : 1;
+    this.scaleY = props.scaleY !== undefined ? props.scaleY : 1;
   }
 
   update(updates) {

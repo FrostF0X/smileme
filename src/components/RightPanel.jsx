@@ -5,6 +5,18 @@ export default function RightPanel({ showRightPanel, setShowRightPanel, rightPan
   if (!showRightPanel || (!bgImage.url && !(activeTool === 'select' && activeShape))) return null;
 
   const currentTab = rightPanelTab || 'options';
+  const tabs = ['options', 'patterns'];
+  const handleTabKeyDown = (event) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+
+    event.preventDefault();
+    const offset = event.key === 'ArrowRight' ? 1 : -1;
+    const nextTab = tabs[(tabs.indexOf(currentTab) + offset + tabs.length) % tabs.length];
+    setRightPanelTab(nextTab);
+    window.requestAnimationFrame(() => {
+      document.getElementById(`right-panel-tab-${nextTab}`)?.focus();
+    });
+  };
 
   return (
     <div className="w-72 bg-slate-50 border-l border-slate-200 shadow-2xl flex flex-col panel-slide z-20 shrink-0">
@@ -15,7 +27,7 @@ export default function RightPanel({ showRightPanel, setShowRightPanel, rightPan
 
       <div className="flex-1 overflow-y-auto p-4">
         {currentTab === 'options' && (
-          <>
+          <div role="tabpanel" id="right-panel-options" aria-labelledby="right-panel-tab-options">
             <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-4">
               <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Cel gestów</h4>
               <div className="flex gap-2">
@@ -38,17 +50,51 @@ export default function RightPanel({ showRightPanel, setShowRightPanel, rightPan
                   <button onClick={() => { setBgImage({ url: null }); setShowRightPanel(false); }} className="flex-1 text-xs py-2 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-lg transition-colors">Usuń Tło</button>
                 </div>
 
-              <div className="bg-indigo-50 p-4 rounded-xl shadow-sm border border-indigo-200 mb-4 mt-4">
-                <h4 className="text-xs font-bold text-indigo-700 uppercase tracking-wider mb-3">Wektoryzacja (Potrace)</h4>
-                <div className="flex justify-between text-xs mb-2 text-slate-600"><span>Ilość warstw</span><span className="font-bold text-indigo-600">{traceConfig?.layers}</span></div>
-                <input type="range" min="1" max="10" step="1" value={traceConfig?.layers || 1} onChange={(e) => setTraceConfig(prev => ({...prev, layers: parseInt(e.target.value)}))} className="w-full mb-3 accent-indigo-500" />
-                <div className="flex justify-between text-xs mb-2 text-slate-600"><span>Usuwanie szumu</span><span className="font-bold text-indigo-600">{traceConfig?.turdsize}</span></div>
-                <input type="range" min="0" max="10" step="1" value={traceConfig?.turdsize || 2} onChange={(e) => setTraceConfig(prev => ({...prev, turdsize: parseInt(e.target.value)}))} className="w-full mb-4 accent-indigo-500" />
-                <button onClick={handleTrace} disabled={isTracing} className="w-full text-sm py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50">
-                  {isTracing ? 'Wektoryzowanie...' : 'Wektoryzuj (Trace)'}
-                </button>
+                <div className="bg-indigo-50 p-4 rounded-xl shadow-sm border border-indigo-200 mb-4 mt-4">
+                  <h4 className="text-xs font-bold text-indigo-700 uppercase tracking-wider mb-3">Wektoryzacja (Potrace)</h4>
+                  <div className="flex justify-between text-xs mb-2 text-slate-600"><span>Ilość warstw</span><span className="font-bold text-indigo-600">{traceConfig?.layers}</span></div>
+                  <input type="range" min="1" max="10" step="1" value={traceConfig?.layers || 1} onChange={(e) => setTraceConfig(prev => ({ ...prev, layers: parseInt(e.target.value) }))} className="w-full mb-3 accent-indigo-500" />
+                  <div className="flex justify-between text-xs mb-2 text-slate-600"><span>Usuwanie szumu</span><span className="font-bold text-indigo-600">{traceConfig?.turdsize}</span></div>
+                  <input type="range" min="0" max="10" step="1" value={traceConfig?.turdsize || 2} onChange={(e) => setTraceConfig(prev => ({ ...prev, turdsize: parseInt(e.target.value) }))} className="w-full mb-4 accent-indigo-500" />
+                  <button onClick={handleTrace} disabled={isTracing} className="w-full text-sm py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50">
+                    {isTracing ? 'Wektoryzowanie...' : 'Wektoryzuj (Trace)'}
+                  </button>
+                </div>
               </div>
+            )}
 
+            {activeTool === 'select' && activeShape && (
+              <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-4">
+                <h4 className="text-xs font-bold text-amber-600 uppercase tracking-wider mb-4 flex items-center gap-2">Przekształcenia</h4>
+
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <div>
+                    <span className="text-[10px] text-slate-500 font-semibold block mb-1">Pozycja X</span>
+                    <input type="number" value={activeShape.x !== undefined ? Math.round(activeShape.x) : 0} onChange={(e) => { const v = parseFloat(e.target.value); updateSelectedShape({ x: isNaN(v) ? 0 : v }); }} className="w-full text-xs p-1.5 border border-slate-300 rounded focus:ring-1 ring-amber-300 outline-none" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 font-semibold block mb-1">Pozycja Y</span>
+                    <input type="number" value={activeShape.y !== undefined ? Math.round(activeShape.y) : 0} onChange={(e) => { const v = parseFloat(e.target.value); updateSelectedShape({ y: isNaN(v) ? 0 : v }); }} className="w-full text-xs p-1.5 border border-slate-300 rounded focus:ring-1 ring-amber-300 outline-none" />
+                  </div>
+                </div>
+
+                <div className="mb-3">
+                  <span className="text-[10px] text-slate-500 font-semibold block mb-1">Obrót (Kąt)</span>
+                  <input type="number" value={activeShape.rotation !== undefined ? Math.round(activeShape.rotation) : 0} onChange={(e) => { const v = parseFloat(e.target.value); updateSelectedShape({ rotation: isNaN(v) ? 0 : v }); }} className="w-full text-xs p-1.5 border border-slate-300 rounded focus:ring-1 ring-amber-300 outline-none mb-2" />
+                  <div className="flex gap-1">
+                    <button onClick={() => updateSelectedShape({ rotation: ((activeShape.rotation || 0) + 90) % 360 })} className="flex-1 text-[10px] bg-slate-100 hover:bg-slate-200 p-1 rounded font-medium">+90°</button>
+                    <button onClick={() => updateSelectedShape({ rotation: ((activeShape.rotation || 0) + 180) % 360 })} className="flex-1 text-[10px] bg-slate-100 hover:bg-slate-200 p-1 rounded font-medium">+180°</button>
+                    <button onClick={() => updateSelectedShape({ rotation: ((activeShape.rotation || 0) + 270) % 360 })} className="flex-1 text-[10px] bg-slate-100 hover:bg-slate-200 p-1 rounded font-medium">+270°</button>
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-slate-500 font-semibold block mb-1">Odbicie</span>
+                  <div className="flex gap-2">
+                    <button onClick={() => updateSelectedShape({ scaleX: (activeShape.scaleX !== undefined ? activeShape.scaleX : 1) * -1 })} className="flex-1 text-xs py-1.5 bg-slate-100 hover:bg-slate-200 rounded font-medium transition-colors text-slate-700 border border-slate-200">Poziome</button>
+                    <button onClick={() => updateSelectedShape({ scaleY: (activeShape.scaleY !== undefined ? activeShape.scaleY : 1) * -1 })} className="flex-1 text-xs py-1.5 bg-slate-100 hover:bg-slate-200 rounded font-medium transition-colors text-slate-700 border border-slate-200">Pionowe</button>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -71,11 +117,11 @@ export default function RightPanel({ showRightPanel, setShowRightPanel, rightPan
                 </div>
               </div>
             )}
-          </>
+          </div>
         )}
 
         {currentTab === 'patterns' && activeTool === 'select' && activeShape && (
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col h-full">
+          <div role="tabpanel" id="right-panel-patterns" aria-labelledby="right-panel-tab-patterns" className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col h-full">
             <h4 className="text-xs font-bold text-amber-600 uppercase tracking-wider mb-4 flex items-center gap-2"><IconPattern /> Dostępne Wzory</h4>
 
             <div className="grid grid-cols-3 gap-2 mb-4">
@@ -102,9 +148,9 @@ export default function RightPanel({ showRightPanel, setShowRightPanel, rightPan
         )}
       </div>
 
-      <div className="flex border-t border-slate-200 bg-slate-100 shrink-0">
-        <button onClick={() => setRightPanelTab('options')} className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${currentTab === 'options' ? 'bg-white text-sky-600 border-t-2 border-sky-500' : 'text-slate-500 hover:bg-slate-200 border-t-2 border-transparent'}`}>Opcje</button>
-        <button onClick={() => setRightPanelTab('patterns')} className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${currentTab === 'patterns' ? 'bg-white text-amber-600 border-t-2 border-amber-500' : 'text-slate-500 hover:bg-slate-200 border-t-2 border-transparent'}`}>Wzory</button>
+      <div role="tablist" className="flex border-t border-slate-200 bg-slate-100 shrink-0">
+        <button id="right-panel-tab-options" role="tab" aria-selected={currentTab === 'options'} aria-controls="right-panel-options" onClick={() => setRightPanelTab('options')} onKeyDown={handleTabKeyDown} className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${currentTab === 'options' ? 'bg-white text-sky-600 border-t-2 border-sky-500' : 'text-slate-500 hover:bg-slate-200 border-t-2 border-transparent'}`}>Opcje</button>
+        <button id="right-panel-tab-patterns" role="tab" aria-selected={currentTab === 'patterns'} aria-controls="right-panel-patterns" onClick={() => setRightPanelTab('patterns')} onKeyDown={handleTabKeyDown} className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${currentTab === 'patterns' ? 'bg-white text-amber-600 border-t-2 border-amber-500' : 'text-slate-500 hover:bg-slate-200 border-t-2 border-transparent'}`}>Wzory</button>
       </div>
     </div>
   );

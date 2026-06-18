@@ -91,6 +91,20 @@ export const pointInPolygon = (point, vs) => {
   return inside;
 };
 
+export const getShapeBounds = (shape) => {
+  const pts = getShapePoints(shape);
+  if (!pts || pts.length === 0) return { cx: 0, cy: 0, width: 0, height: 0, rx: 0, ry: 0 };
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const p of pts) {
+    if (p.x < minX) minX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y > maxY) maxY = p.y;
+  }
+  const width = maxX - minX, height = maxY - minY;
+  return { cx: minX + width / 2, cy: minY + height / 2, width, height, rx: width / 2, ry: height / 2 };
+};
+
 export const getShapePoints = (shape) => {
   if (shape.type === 'ellipse') {
     return [
