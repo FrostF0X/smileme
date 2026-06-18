@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { processSnapper, processBezierSmoother, processDrawer } from '../utils/shapeProcessor';
 import { calculateNewCanvasState, calculateNewBgImageState } from '../utils/transformUtils';
 
-export default function useDrawing(svgRef, activeTool, globalColor, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage, canvasTransform, setCanvasTransform, transformTarget, mainGroupRef, onLassoComplete) {
+export default function useDrawing(svgRef, activeTool, globalColor, globalFillColor, globalFillPattern, globalPatternSettings, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage, canvasTransform, setCanvasTransform, transformTarget, mainGroupRef, onLassoComplete) {
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentStroke, setCurrentStroke] = useState([]);
   const activePointers = useRef(new Map());
@@ -124,11 +124,11 @@ export default function useDrawing(svgRef, activeTool, globalColor, smoothAmount
           try {
             let newShape;
             if (activeTool === 'snapper') {
-              newShape = processSnapper(currentStroke, globalColor);
+              newShape = processSnapper(currentStroke, globalColor, globalFillColor, globalFillPattern, globalPatternSettings);
             } else if (activeTool === 'drawer') {
-              newShape = processDrawer(currentStroke, globalColor, smoothAmount, forceCloseShape);
+              newShape = processDrawer(currentStroke, globalColor, smoothAmount, forceCloseShape, globalFillColor, globalFillPattern, globalPatternSettings);
             } else {
-              newShape = processBezierSmoother(currentStroke, globalColor, smoothAmount, forceCloseShape);
+              newShape = processBezierSmoother(currentStroke, globalColor, smoothAmount, forceCloseShape, globalFillColor, globalFillPattern, globalPatternSettings);
             }
             commitShapes([...shapes, newShape]);
           } catch (err) { console.error(err); }

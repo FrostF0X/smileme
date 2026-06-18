@@ -5,6 +5,8 @@ import ToolbarTop from './components/ToolbarTop';
 import Canvas from './components/Canvas';
 import RightPanel from './components/RightPanel';
 import GeminiApp from './components/GeminiApp';
+import ColorPickerPopup from './components/ColorPickerPopup';
+
 import PatternEditor from './components/PatternEditor';
 import useDrawing from './hooks/useDrawing';
 import { exportCleanSVG } from './utils/svgExport';
@@ -62,6 +64,11 @@ export default function App() {
   const [smoothAmount, setSmoothAmount] = useState(50);
   const [forceCloseShape, setForceCloseShape] = useState(true);
   const [globalColor, setGlobalColor] = useState('#000000');
+  const [globalFillColor, setGlobalFillColor] = useState(null);
+  const [globalFillPattern, setGlobalFillPattern] = useState(null);
+  const [globalPatternSettings, setGlobalPatternSettings] = useState({ layout: 'grid', scale: 1, spacing: 0 });
+  const [showColorPopup, setShowColorPopup] = useState(false);
+  const [activeColorPicker, setActiveColorPicker] = useState('stroke');
   const [showRightPanel, setShowRightPanel] = useState(false);
   const [selectedShapeIndices, setSelectedShapeIndices] = useState([]);
   const [bgImage, setBgImage] = useState({ url: null, width: 0, height: 0, x: 0, y: 0, scale: 1, angle: 0, opacity: 0.7 });
@@ -117,7 +124,7 @@ export default function App() {
   };
 
   const { isDrawing, currentStroke, handlePointerDown, handlePointerMove, handlePointerUp } = useDrawing(
-    svgRef, activeTool, globalColor, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage, canvasTransform, setCanvasTransform, transformTarget, mainGroupRef, onLassoComplete
+    svgRef, activeTool, globalColor, globalFillColor, globalFillPattern, globalPatternSettings, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage, canvasTransform, setCanvasTransform, transformTarget, mainGroupRef, onLassoComplete
   );
 
   useEffect(() => { if (activeTool !== 'select') setSelectedShapeIndices([]); }, [activeTool]);
@@ -207,9 +214,29 @@ export default function App() {
       <input type="file" accept="image/*" ref={imageInputRef} onChange={(e) => handleImageChangeEvent(e, setBgImage, setShowRightPanel, svgRef)} className="hidden" />
       <input type="file" accept=".svg" ref={patternInputRef} onChange={(e) => handlePatternUploadEvent(e, updateSelectedShape)} className="hidden" />
 
-      <ToolbarLeft activeTool={activeTool} setActiveTool={setActiveTool} bgImage={bgImage} setShowRightPanel={setShowRightPanel} imageInputRef={imageInputRef} setCanvasTransform={setCanvasTransform} setShowGeminiApp={setShowGeminiApp} />
+            <ToolbarLeft
+        activeTool={activeTool} setActiveTool={setActiveTool} bgImage={bgImage} setShowRightPanel={setShowRightPanel} imageInputRef={imageInputRef} setCanvasTransform={setCanvasTransform} setShowGeminiApp={setShowGeminiApp}
+        globalColor={globalColor} globalFillColor={globalFillColor} globalFillPattern={globalFillPattern}
+        activeShape={selectedShapeIndices.length > 0 ? shapes[selectedShapeIndices[0]] : null}
+        showColorPopup={showColorPopup} setShowColorPopup={setShowColorPopup}
+        activeColorPicker={activeColorPicker} setActiveColorPicker={setActiveColorPicker}
+      />
 
       {showGeminiApp && <GeminiApp onClose={() => setShowGeminiApp(false)} bgImage={bgImage} setBgImage={setBgImage} />}
+      {showColorPopup && (
+        <ColorPickerPopup
+          activeColorPicker={activeColorPicker}
+          globalColor={globalColor} setGlobalColor={setGlobalColor}
+          globalFillColor={globalFillColor} setGlobalFillColor={setGlobalFillColor}
+          globalFillPattern={globalFillPattern} setGlobalFillPattern={setGlobalFillPattern}
+          globalPatternSettings={globalPatternSettings} setGlobalPatternSettings={setGlobalPatternSettings}
+          activeShape={selectedShapeIndices.length > 0 ? shapes[selectedShapeIndices[0]] : null}
+          updateSelectedShape={updateSelectedShape}
+          customPatterns={customPatterns}
+          setIsPatternEditor={setIsPatternEditor}
+          setShowColorPopup={setShowColorPopup}
+        />
+      )}
 
       <div className="flex-1 flex flex-col relative overflow-hidden">
         <ToolbarTop
