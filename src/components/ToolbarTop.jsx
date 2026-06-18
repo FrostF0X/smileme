@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { IconPattern, IconUndo, IconRedo, IconTrash, IconUpload, IconDownload } from '../icons/icons';
 
 const colors = ['#000000', '#FFFFFF', '#FC0FC0', '#00F6FF', '#F9F808', '#FF3B30', '#4CD964', '#007AFF'];
@@ -14,28 +14,91 @@ const SmoothControls = ({ forceCloseShape, setForceCloseShape, smoothAmount, set
   </div>
 );
 
-const EditControls = ({ activeShape, updateSelectedShape, setShowRightPanel }) => (
-  <div className="flex items-center gap-4 shrink-0">
-    <span className="text-sm font-bold text-amber-600">Edycja:</span>
-    <div className="flex items-center gap-2">
-      {colors.map(c => (
-        <button key={c} onClick={() => updateSelectedShape({ color: c })} className={`w-6 h-6 rounded-full border ${activeShape.color === c ? 'scale-110 ring-2 ring-offset-1 ring-amber-400 border-transparent' : 'border-slate-300'}`} style={{ backgroundColor: c }} />
-      ))}
-    </div>
-    <div className="border-l border-slate-200 pl-4 flex items-center gap-2">
-      <IconPattern />
-      <select className="text-sm border border-slate-300 rounded p-1 bg-slate-50 outline-none" value={activeShape.fillPattern || ''} onChange={(e) => { const val = e.target.value; updateSelectedShape({ fillPattern: val || null }); if (val) setShowRightPanel(true); }}>
-        <option value="">Brak Wypełnienia</option><option value="dots">Kropki</option><option value="grid">Siatka</option><option value="lines">Paski</option><option value="custom">Własny SVG...</option>
-      </select>
-    </div>
-    <button onClick={() => setShowRightPanel(true)} className="ml-2 px-3 py-1 bg-slate-100 hover:bg-slate-200 text-xs font-medium rounded border border-slate-200 text-slate-700">Opcje Wzoru</button>
-  </div>
-);
+const EditControls = ({ activeShape, updateSelectedShape, setShowRightPanel, setRightPanelTab }) => {
+  const [activeDropdown, setActiveDropdown] = useState(null);
 
-export default function ToolbarTop({ activeTool, globalColor, setGlobalColor, forceCloseShape, setForceCloseShape, smoothAmount, setSmoothAmount, activeShape, updateSelectedShape, setShowRightPanel, undo, redo, canUndo, canRedo, handleClear, fileInputRef, exportSVG, shapesCount }) {
+  const toggleDropdown = (name) => {
+    setActiveDropdown(prev => prev === name ? null : name);
+  };
+
+  const handleColorSelect = (c, isFill) => {
+    if (isFill) updateSelectedShape({ fillPattern: null, fillColor: c });
+    else updateSelectedShape({ color: c });
+    setActiveDropdown(null);
+  };
+
+  const handlePatternSelect = () => {
+    setShowRightPanel(true);
+    setRightPanelTab('patterns');
+    setActiveDropdown(null);
+  };
+
+  const isFillEmpty = !activeShape.fillPattern && !activeShape.fillColor;
+
+  return (
+    <div className="flex items-center gap-4 shrink-0 relative">
+      <span className="text-sm font-bold text-amber-600">Edycja:</span>
+
+      <div className="flex items-center gap-3">
+        {/* Stroke Color Square */}
+        <div className="relative">
+          <button
+            onClick={() => toggleDropdown('stroke')}
+            className={`w-8 h-8 rounded border-2 ${activeDropdown === 'stroke' ? 'border-amber-400' : 'border-slate-300'}`}
+            style={{ backgroundColor: activeShape.color || '#000' }}
+            title="Stroke Color"
+          />
+          {activeDropdown === 'stroke' && (
+            <div className="absolute top-10 left-0 bg-white border border-slate-200 shadow-xl rounded-lg p-2 flex gap-2 z-50">
+              {colors.map(c => (
+                <button key={c} onClick={() => handleColorSelect(c, false)} className="w-6 h-6 rounded-full border border-slate-300 hover:scale-110" style={{ backgroundColor: c }} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Fill Color Square */}
+        <div className="relative">
+          <button
+            onClick={() => toggleDropdown('fill')}
+            className={`w-8 h-8 rounded border-2 relative ${activeDropdown === 'fill' ? 'border-amber-400' : 'border-slate-300'}`}
+            style={{ backgroundColor: activeShape.fillPattern ? 'transparent' : (activeShape.fillColor || 'transparent') }}
+            title="Fill Options"
+          >
+            {isFillEmpty && (
+              <div className="absolute inset-0 m-auto w-full h-0.5 bg-red-500 transform rotate-45"></div>
+            )}
+            {activeShape.fillPattern && (
+              <div className="absolute inset-0 flex items-center justify-center"><IconPattern /></div>
+            )}
+          </button>
+
+          {activeDropdown === 'fill' && (
+            <div className="absolute top-10 left-0 bg-white border border-slate-200 shadow-xl rounded-lg p-2 flex flex-col gap-2 z-50 w-max">
+              <div className="flex gap-2">
+                <button onClick={() => handleColorSelect(null, true)} className="w-6 h-6 rounded-full border border-slate-300 hover:scale-110 relative" title="Brak">
+                  <div className="absolute inset-0 m-auto w-full h-0.5 bg-red-500 transform rotate-45"></div>
+                </button>
+                {colors.map(c => (
+                  <button key={c} onClick={() => handleColorSelect(c, true)} className="w-6 h-6 rounded-full border border-slate-300 hover:scale-110" style={{ backgroundColor: c }} />
+                ))}
+              </div>
+              <div className="h-px w-full bg-slate-200"></div>
+              <button onClick={handlePatternSelect} className="flex items-center gap-2 text-sm text-slate-700 hover:bg-slate-100 p-1.5 rounded w-full">
+                <IconPattern /> <span className="font-medium">Wzory...</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default function ToolbarTop({ activeTool, globalColor, setGlobalColor, forceCloseShape, setForceCloseShape, smoothAmount, setSmoothAmount, activeShape, updateSelectedShape, setShowRightPanel, setRightPanelTab, undo, redo, canUndo, canRedo, handleClear, fileInputRef, exportSVG, shapesCount }) {
   return (
     <div className="h-14 bg-white border-b border-slate-300 flex items-center justify-between px-4 z-20 shadow-sm shrink-0">
-      <div className="flex items-center gap-6 overflow-x-auto">
+      <div className="flex items-center gap-6 overflow-visible">
         {(activeTool === 'smoother' || activeTool === 'snapper' || activeTool === 'drawer') && (
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 shrink-0">
@@ -47,7 +110,7 @@ export default function ToolbarTop({ activeTool, globalColor, setGlobalColor, fo
           </div>
         )}
         {activeTool === 'select' && !activeShape && (<span className="text-sm font-medium text-slate-500">Wybierz kształt na płótnie, aby go edytować.</span>)}
-        {activeTool === 'select' && activeShape && <EditControls activeShape={activeShape} updateSelectedShape={updateSelectedShape} setShowRightPanel={setShowRightPanel} />}
+        {activeTool === 'select' && activeShape && <EditControls activeShape={activeShape} updateSelectedShape={updateSelectedShape} setShowRightPanel={setShowRightPanel} setRightPanelTab={setRightPanelTab} />}
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <button onClick={undo} disabled={!canUndo} title="Cofnij" className="p-2 text-slate-600 hover:bg-slate-100 rounded disabled:opacity-30"><IconUndo /></button>
