@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { processSnapper, processBezierSmoother, processDrawer } from '../utils/shapeProcessor';
 import { calculateNewCanvasState, calculateNewBgImageState } from '../utils/transformUtils';
 
-export default function useDrawing(svgRef, activeTool, globalColor, globalFillColor, globalFillPattern, globalPatternSettings, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage, canvasTransform, setCanvasTransform, transformTarget, mainGroupRef, onLassoComplete, selectedShapeIndices, updateSelectedShape) {
+export default function useDrawing(svgRef, activeTool, globalColor, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage, canvasTransform, setCanvasTransform, transformTarget, mainGroupRef, onLassoComplete, selectedShapeIndices, updateSelectedShape) {
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentStroke, setCurrentStroke] = useState([]);
   const activePointers = useRef(new Map());
@@ -150,11 +150,11 @@ export default function useDrawing(svgRef, activeTool, globalColor, globalFillCo
           try {
             let newShape;
             if (activeTool === 'snapper') {
-              newShape = processSnapper(currentStroke, globalColor, globalFillColor, globalFillPattern, globalPatternSettings);
+              newShape = processSnapper(currentStroke, globalColor);
             } else if (activeTool === 'drawer') {
-              newShape = processDrawer(currentStroke, globalColor, smoothAmount, forceCloseShape, globalFillColor, globalFillPattern, globalPatternSettings);
+              newShape = processDrawer(currentStroke, globalColor, smoothAmount, forceCloseShape);
             } else {
-              newShape = processBezierSmoother(currentStroke, globalColor, smoothAmount, forceCloseShape, globalFillColor, globalFillPattern, globalPatternSettings);
+              newShape = processBezierSmoother(currentStroke, globalColor, smoothAmount, forceCloseShape);
             }
             commitShapes([...shapes, newShape]);
           } catch (err) { console.error(err); }
