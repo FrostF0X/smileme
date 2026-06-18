@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { processSnapper, processBezierSmoother, processDrawer } from '../utils/shapeProcessor';
 import { calculateNewCanvasState, calculateNewBgImageState } from '../utils/transformUtils';
 
-export default function useDrawing(svgRef, activeTool, globalColor, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage, canvasTransform, setCanvasTransform, transformTarget, mainGroupRef, onLassoComplete) {
+export default function useDrawing(svgRef, activeTool, globalColor, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage, canvasTransform, setCanvasTransform, transformTarget, mainGroupRef, onLassoComplete, selectedShapeIndices, updateSelectedShape) {
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentStroke, setCurrentStroke] = useState([]);
   const activePointers = useRef(new Map());
@@ -44,11 +44,23 @@ export default function useDrawing(svgRef, activeTool, globalColor, smoothAmount
       const stateCanvas = calculateNewCanvasState(pts, canvasTransform, null);
       const stateBg = calculateNewBgImageState(pts, bgImage, null);
 
+      let shapeState = {};
+      if (transformTarget === 'selection' && selectedShapeIndices && selectedShapeIndices.length > 0) {
+        const activeShape = shapes[selectedShapeIndices[0]];
+        shapeState = {
+           shapeStartScaleX: activeShape.scaleX !== undefined ? activeShape.scaleX : 1,
+           shapeStartScaleY: activeShape.scaleY !== undefined ? activeShape.scaleY : 1,
+           shapeStartRotation: activeShape.rotation || 0,
+           hasMoved: false
+        };
+      }
+
       gestureStart.current = {
         canX: canvasTransform.x, canY: canvasTransform.y, canScale: canvasTransform.scale, canAngle: canvasTransform.angle,
         imgX: bgImage.x, imgY: bgImage.y, imgScale: bgImage.scale, imgAngle: bgImage.angle,
         ...stateCanvas,
-        ...stateBg
+        ...stateBg,
+        ...shapeState
       };
     }
     else if (activePointers.current.size === 1 && activeTool === 'pan') {
@@ -77,6 +89,20 @@ export default function useDrawing(svgRef, activeTool, globalColor, smoothAmount
       } else if (transformTarget === 'background' && bgImage.url) {
         const newState = calculateNewBgImageState(pts, bgImage, gestureStart.current);
         setBgImage(newState);
+      } else if (transformTarget === 'selection' && selectedShapeIndices && selectedShapeIndices.length > 0) {
+        const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+        const angle = Math.atan2(pts[1].y - pts[0].y, pts[1].x - pts[0].x);
+
+        const scaleRatio = dist / gestureStart.current.startDist;
+        const angleDelta = (angle - gestureStart.current.startAngle) * (180 / Math.PI);
+
+        const replaceHistory = gestureStart.current.hasMoved;
+        updateSelectedShape({
+          scaleX: gestureStart.current.shapeStartScaleX * scaleRatio,
+          scaleY: gestureStart.current.shapeStartScaleY * scaleRatio,
+          rotation: (gestureStart.current.shapeStartRotation + angleDelta) % 360
+        }, replaceHistory);
+        gestureStart.current.hasMoved = true;
       }
     }
     else if (activePointers.current.size === 1 && activeTool === 'pan' && gestureStart.current) {
