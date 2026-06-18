@@ -15,7 +15,7 @@ export default function RightPanel({ showRightPanel, setShowRightPanel, rightPan
 
       <div className="flex-1 overflow-y-auto p-4">
         {currentTab === 'options' && (
-          <>
+          <div role="tabpanel" id="right-panel-options" aria-labelledby="right-panel-tab-options">
             <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-4">
               <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Cel gestów</h4>
               <div className="flex gap-2">
@@ -105,11 +105,11 @@ export default function RightPanel({ showRightPanel, setShowRightPanel, rightPan
                 </div>
               </div>
             )}
-          </>
+          </div>
         )}
 
         {currentTab === 'patterns' && activeTool === 'select' && activeShape && (
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col h-full">
+          <div role="tabpanel" id="right-panel-patterns" aria-labelledby="right-panel-tab-patterns" className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col h-full">
             <h4 className="text-xs font-bold text-amber-600 uppercase tracking-wider mb-4 flex items-center gap-2"><IconPattern /> Dostępne Wzory</h4>
 
             <div className="grid grid-cols-3 gap-2 mb-4">
@@ -136,9 +136,9 @@ export default function RightPanel({ showRightPanel, setShowRightPanel, rightPan
         )}
       </div>
 
-      <div className="flex border-t border-slate-200 bg-slate-100 shrink-0">
-        <button onClick={() => setRightPanelTab('options')} className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${currentTab === 'options' ? 'bg-white text-sky-600 border-t-2 border-sky-500' : 'text-slate-500 hover:bg-slate-200 border-t-2 border-transparent'}`}>Opcje</button>
-        <button onClick={() => setRightPanelTab('patterns')} className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${currentTab === 'patterns' ? 'bg-white text-amber-600 border-t-2 border-amber-500' : 'text-slate-500 hover:bg-slate-200 border-t-2 border-transparent'}`}>Wzory</button>
+      <div role="tablist" className="flex border-t border-slate-200 bg-slate-100 shrink-0">
+        <button id="right-panel-tab-options" role="tab" aria-selected={currentTab === 'options'} aria-controls="right-panel-options" onClick={() => setRightPanelTab('options')} className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${currentTab === 'options' ? 'bg-white text-sky-600 border-t-2 border-sky-500' : 'text-slate-500 hover:bg-slate-200 border-t-2 border-transparent'}`}>Opcje</button>
+        <button id="right-panel-tab-patterns" role="tab" aria-selected={currentTab === 'patterns'} aria-controls="right-panel-patterns" onClick={() => setRightPanelTab('patterns')} className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${currentTab === 'patterns' ? 'bg-white text-amber-600 border-t-2 border-amber-500' : 'text-slate-500 hover:bg-slate-200 border-t-2 border-transparent'}`}>Wzory</button>
       </div>
     </div>
   );
