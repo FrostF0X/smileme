@@ -31,7 +31,7 @@ export default function GeminiApp({ onClose, setBgImage }) {
 
     try {
       const response = await fetch(
-        'https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict',
+        'https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict',
         {
           method: 'POST',
           headers: {
