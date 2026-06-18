@@ -2,20 +2,7 @@ import React, { useState } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 
 export default function GeminiApp({ onClose, setBgImage }) {
-  const [userToken, setUserToken] = useState(() => {
-    try {
-      const stored = localStorage.getItem('google_oauth_token_info');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed.expiresAt > Date.now()) {
-          return parsed.token;
-        } else {
-          localStorage.removeItem('google_oauth_token_info');
-        }
-      }
-    } catch (e) {}
-    return null;
-  });
+  const [userToken, setUserToken] = useState(null);
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -25,13 +12,7 @@ export default function GeminiApp({ onClose, setBgImage }) {
 
   const login = useGoogleLogin({
     onSuccess: (tokenResponse) => {
-      const token = tokenResponse.access_token;
-      const expiresIn = tokenResponse.expires_in || 3599;
-      localStorage.setItem('google_oauth_token_info', JSON.stringify({
-        token,
-        expiresAt: Date.now() + expiresIn * 1000
-      }));
-      setUserToken(token);
+      setUserToken(tokenResponse.access_token);
       setError(null);
     },
     scope: 'https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/generative-language.retriever',
@@ -66,13 +47,6 @@ export default function GeminiApp({ onClose, setBgImage }) {
           })
         }
       );
-
-      if (response.status === 401) {
-        localStorage.removeItem('google_oauth_token_info');
-        setUserToken(null);
-        setError("Session expired. Please log in again.");
-        return;
-      }
 
       const data = await response.json();
 

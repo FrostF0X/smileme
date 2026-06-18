@@ -1,3 +1,5 @@
 node_modules
 dist
 dev_server.log
+npm_output.log
+vite

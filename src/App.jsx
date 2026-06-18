@@ -6,14 +6,12 @@ import Canvas from './components/Canvas';
 import RightPanel from './components/RightPanel';
 import GeminiApp from './components/GeminiApp';
 import ColorPickerPopup from './components/ColorPickerPopup';
-
 import PatternEditor from './components/PatternEditor';
 import useDrawing from './hooks/useDrawing';
 import { exportCleanSVG } from './utils/svgExport';
 import { handlePatternUploadEvent, handleImageChangeEvent, handleFileChangeEvent } from './utils/fileHandlers';
 import { traceImageMultipleLayers } from './utils/traceUtils';
 import { pointInPolygon, getShapePoints } from './utils/shapeProcessor';
-
 
 export default function App() {
   const svgRef = useRef(null);
@@ -93,7 +91,6 @@ export default function App() {
     } catch (e) {}
   }, [customPatterns]);
 
-
   const handleTrace = async () => {
     if (!bgImage.url || isTracing) return;
     setIsTracing(true);
@@ -123,11 +120,28 @@ export default function App() {
     if (selected.length > 0) setShowRightPanel(true);
   };
 
+  const updateSelectedShape = (updates, replace = false) => {
+    if (selectedShapeIndices.length === 0) return;
+    commitShapesFunctional((prev) => {
+      const next = [...prev];
+      selectedShapeIndices.forEach(idx => {
+        next[idx] = { ...next[idx], ...updates };
+      });
+      return next;
+    }, replace);
+  };
+
   const { isDrawing, currentStroke, handlePointerDown, handlePointerMove, handlePointerUp } = useDrawing(
-    svgRef, activeTool, globalColor, globalFillColor, globalFillPattern, globalPatternSettings, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage, canvasTransform, setCanvasTransform, transformTarget, mainGroupRef, onLassoComplete
+    svgRef, activeTool, globalColor, globalFillColor, globalFillPattern, globalPatternSettings, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage, canvasTransform, setCanvasTransform, transformTarget, mainGroupRef, onLassoComplete, selectedShapeIndices, updateSelectedShape
   );
 
   useEffect(() => { if (activeTool !== 'select') setSelectedShapeIndices([]); }, [activeTool]);
+
+  useEffect(() => {
+    if (transformTarget === 'selection' && (selectedShapeIndices.length === 0 || activeTool !== 'select')) {
+      setTransformTarget('canvas');
+    }
+  }, [transformTarget, selectedShapeIndices, activeTool]);
 
   const transformingRef = useRef(null);
 
@@ -135,24 +149,6 @@ export default function App() {
     if (!svgRef.current) return { x: 0, y: 0 };
     const rect = svgRef.current.getBoundingClientRect();
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-  };
-
-  const getCanvasCoordinates = (e) => {
-    if (!svgRef.current) return { x: 0, y: 0 };
-    let pt = svgRef.current.createSVGPoint();
-    pt.x = e.clientX;
-    pt.y = e.clientY;
-    if (mainGroupRef.current) {
-      try {
-        const ctm = mainGroupRef.current.getScreenCTM();
-        if (ctm) pt = pt.matrixTransform(ctm.inverse());
-      } catch (err) {}
-    } else {
-      const rect = svgRef.current.getBoundingClientRect();
-      pt.x -= rect.left;
-      pt.y -= rect.top;
-    }
-    return { x: pt.x, y: pt.y };
   };
 
   const handleShapeInteraction = (e, shape, index, actionType) => {
@@ -166,23 +162,15 @@ export default function App() {
       if (svgRef.current) svgRef.current.setPointerCapture(e.pointerId);
 
       const pt = getScreenCoordinates(e);
-      const canvasPt = getCanvasCoordinates(e);
-      const bounds = getShapeBounds(shape);
 
       transformingRef.current = {
         active: true,
         pointerId: e.pointerId,
-        action: actionType,
         index: index,
         startX: pt.x,
         startY: pt.y,
-        canvasStartX: canvasPt.x,
-        canvasStartY: canvasPt.y,
         shapeStartX: shape.x || 0,
         shapeStartY: shape.y || 0,
-        shapeStartRotation: shape.rotation || 0,
-        shapeCenterX: bounds.cx + (shape.x || 0),
-        shapeCenterY: bounds.cy + (shape.y || 0),
         hasMoved: false
       };
     }
@@ -228,35 +216,15 @@ export default function App() {
 
       const replaceHistory = transformingRef.current.hasMoved;
 
-      if (transformingRef.current.action === 'move') {
-        commitShapesFunctional((prev) => {
-          const next = [...prev];
-          next[transformingRef.current.index] = {
-            ...next[transformingRef.current.index],
-            x: transformingRef.current.shapeStartX + actualDx,
-            y: transformingRef.current.shapeStartY + actualDy
-          };
-          return next;
-        }, replaceHistory);
-      } else if (transformingRef.current.action === 'rotateScale') {
-        const canvasPt = getCanvasCoordinates(e);
-        const cx = transformingRef.current.shapeCenterX;
-        const cy = transformingRef.current.shapeCenterY;
-
-        const startAngle = Math.atan2(transformingRef.current.canvasStartY - cy, transformingRef.current.canvasStartX - cx);
-        const currentAngle = Math.atan2(canvasPt.y - cy, canvasPt.x - cx);
-
-        let angleDiff = (currentAngle - startAngle) * (180 / Math.PI);
-
-        commitShapesFunctional((prev) => {
-          const next = [...prev];
-          next[transformingRef.current.index] = {
-            ...next[transformingRef.current.index],
-            rotation: (transformingRef.current.shapeStartRotation + angleDiff) % 360
-          };
-          return next;
-        }, replaceHistory);
-      }
+      commitShapesFunctional((prev) => {
+        const next = [...prev];
+        next[transformingRef.current.index] = {
+          ...next[transformingRef.current.index],
+          x: transformingRef.current.shapeStartX + actualDx,
+          y: transformingRef.current.shapeStartY + actualDy
+        };
+        return next;
+      }, replaceHistory);
 
       transformingRef.current.hasMoved = true;
       return;
@@ -282,15 +250,6 @@ export default function App() {
     } else {
       handlePointerUp(e);
     }
-  };
-
-  const updateSelectedShape = (updates) => {
-    if (selectedShapeIndices.length === 0) return;
-    const newShapes = [...shapes];
-    selectedShapeIndices.forEach(idx => {
-      newShapes[idx] = { ...newShapes[idx], ...updates };
-    });
-    commitShapes(newShapes);
   };
 
   if (isPatternEditor) {
@@ -342,7 +301,7 @@ export default function App() {
         <ToolbarTop
           activeTool={activeTool} globalColor={globalColor} setGlobalColor={setGlobalColor} forceCloseShape={forceCloseShape} setForceCloseShape={setForceCloseShape}
           smoothAmount={smoothAmount} setSmoothAmount={setSmoothAmount} activeShape={selectedShapeIndices.length > 0 ? shapes[selectedShapeIndices[0]] : null}
-          updateSelectedShape={updateSelectedShape} setShowRightPanel={setShowRightPanel} setRightPanelTab={setRightPanelTab}
+          updateSelectedShape={updateSelectedShape} setShowRightPanel={setShowRightPanel}
           undo={undo} redo={redo} canUndo={historyObj.canUndo()} canRedo={historyObj.canRedo()}
           handleClear={() => { if (window.confirm("Wyczyścić wektory?")) commitShapes([]); }} fileInputRef={fileInputRef}
           exportSVG={() => exportCleanSVG(shapes, svgRef)} shapesCount={shapes.length}
