@@ -5,6 +5,18 @@ export default function RightPanel({ showRightPanel, setShowRightPanel, rightPan
   if (!showRightPanel || (!bgImage.url && !(activeTool === 'select' && activeShape))) return null;
 
   const currentTab = rightPanelTab || 'options';
+  const tabs = ['options', 'patterns'];
+  const handleTabKeyDown = (event) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+
+    event.preventDefault();
+    const offset = event.key === 'ArrowRight' ? 1 : -1;
+    const nextTab = tabs[(tabs.indexOf(currentTab) + offset + tabs.length) % tabs.length];
+    setRightPanelTab(nextTab);
+    window.requestAnimationFrame(() => {
+      document.getElementById(`right-panel-tab-${nextTab}`)?.focus();
+    });
+  };
 
   return (
     <div className="w-72 bg-slate-50 border-l border-slate-200 shadow-2xl flex flex-col panel-slide z-20 shrink-0">
@@ -137,8 +149,8 @@ export default function RightPanel({ showRightPanel, setShowRightPanel, rightPan
       </div>
 
       <div role="tablist" className="flex border-t border-slate-200 bg-slate-100 shrink-0">
-        <button id="right-panel-tab-options" role="tab" aria-selected={currentTab === 'options'} aria-controls="right-panel-options" onClick={() => setRightPanelTab('options')} className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${currentTab === 'options' ? 'bg-white text-sky-600 border-t-2 border-sky-500' : 'text-slate-500 hover:bg-slate-200 border-t-2 border-transparent'}`}>Opcje</button>
-        <button id="right-panel-tab-patterns" role="tab" aria-selected={currentTab === 'patterns'} aria-controls="right-panel-patterns" onClick={() => setRightPanelTab('patterns')} className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${currentTab === 'patterns' ? 'bg-white text-amber-600 border-t-2 border-amber-500' : 'text-slate-500 hover:bg-slate-200 border-t-2 border-transparent'}`}>Wzory</button>
+        <button id="right-panel-tab-options" role="tab" aria-selected={currentTab === 'options'} aria-controls="right-panel-options" onClick={() => setRightPanelTab('options')} onKeyDown={handleTabKeyDown} className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${currentTab === 'options' ? 'bg-white text-sky-600 border-t-2 border-sky-500' : 'text-slate-500 hover:bg-slate-200 border-t-2 border-transparent'}`}>Opcje</button>
+        <button id="right-panel-tab-patterns" role="tab" aria-selected={currentTab === 'patterns'} aria-controls="right-panel-patterns" onClick={() => setRightPanelTab('patterns')} onKeyDown={handleTabKeyDown} className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${currentTab === 'patterns' ? 'bg-white text-amber-600 border-t-2 border-amber-500' : 'text-slate-500 hover:bg-slate-200 border-t-2 border-transparent'}`}>Wzory</button>
       </div>
     </div>
   );
