@@ -5,11 +5,13 @@ import ToolbarTop from './components/ToolbarTop';
 import Canvas from './components/Canvas';
 import RightPanel from './components/RightPanel';
 import GeminiApp from './components/GeminiApp';
+import PatternEditor from './components/PatternEditor';
 import useDrawing from './hooks/useDrawing';
 import { exportCleanSVG } from './utils/svgExport';
 import { handlePatternUploadEvent, handleImageChangeEvent, handleFileChangeEvent } from './utils/fileHandlers';
 import { traceImageMultipleLayers } from './utils/traceUtils';
 import { pointInPolygon, getShapePoints } from './utils/shapeProcessor';
+
 
 export default function App() {
   const svgRef = useRef(null);
@@ -68,6 +70,22 @@ export default function App() {
   const [canvasTransform, setCanvasTransform] = useState({ x: 0, y: 0, scale: 1, angle: 0 });
   const [transformTarget, setTransformTarget] = useState('canvas');
   const [showGeminiApp, setShowGeminiApp] = useState(false);
+  const [rightPanelTab, setRightPanelTab] = useState('options');
+  const [isPatternEditor, setIsPatternEditor] = useState(false);
+  const [customPatterns, setCustomPatterns] = useState(() => {
+    try {
+      const saved = localStorage.getItem('custom_patterns_v1');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return [];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('custom_patterns_v1', JSON.stringify(customPatterns));
+    } catch (e) {}
+  }, [customPatterns]);
+
 
   const handleTrace = async () => {
     if (!bgImage.url || isTracing) return;
@@ -168,6 +186,21 @@ export default function App() {
     commitShapes(newShapes);
   };
 
+  if (isPatternEditor) {
+    return (
+      <PatternEditor
+        onClose={() => setIsPatternEditor(false)}
+        onSave={(dataUrl) => {
+          setCustomPatterns(prev => [...prev, dataUrl]);
+          if (selectedShapeIndices.length > 0) {
+            updateSelectedShape({ fillPattern: 'custom', customPatternSvg: dataUrl });
+          }
+          setIsPatternEditor(false);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-200">
       <input type="file" accept=".svg" ref={fileInputRef} onChange={(e) => handleFileChangeEvent(e, commitShapes, shapes)} className="hidden" />
@@ -182,7 +215,7 @@ export default function App() {
         <ToolbarTop
           activeTool={activeTool} globalColor={globalColor} setGlobalColor={setGlobalColor} forceCloseShape={forceCloseShape} setForceCloseShape={setForceCloseShape}
           smoothAmount={smoothAmount} setSmoothAmount={setSmoothAmount} activeShape={selectedShapeIndices.length > 0 ? shapes[selectedShapeIndices[0]] : null}
-          updateSelectedShape={updateSelectedShape} setShowRightPanel={setShowRightPanel}
+          updateSelectedShape={updateSelectedShape} setShowRightPanel={setShowRightPanel} setRightPanelTab={setRightPanelTab}
           undo={undo} redo={redo} canUndo={historyObj.canUndo()} canRedo={historyObj.canRedo()}
           handleClear={() => { if (window.confirm("Wyczyścić wektory?")) commitShapes([]); }} fileInputRef={fileInputRef}
           exportSVG={() => exportCleanSVG(shapes, svgRef)} shapesCount={shapes.length}
@@ -195,11 +228,11 @@ export default function App() {
             selectedShapeIndices={selectedShapeIndices} handleShapeInteraction={handleShapeInteraction}
           />
           <RightPanel
-            showRightPanel={showRightPanel} setShowRightPanel={setShowRightPanel} bgImage={bgImage} setBgImage={setBgImage}
+            showRightPanel={showRightPanel} setShowRightPanel={setShowRightPanel} rightPanelTab={rightPanelTab} setRightPanelTab={setRightPanelTab} bgImage={bgImage} setBgImage={setBgImage}
             activeTool={activeTool} activeShape={selectedShapeIndices.length > 0 ? shapes[selectedShapeIndices[0]] : null}
             updateSelectedShape={updateSelectedShape} patternInputRef={patternInputRef} svgRef={svgRef}
             traceConfig={traceConfig} setTraceConfig={setTraceConfig} handleTrace={handleTrace} isTracing={isTracing}
-            transformTarget={transformTarget} setTransformTarget={setTransformTarget}
+            transformTarget={transformTarget} setTransformTarget={setTransformTarget} customPatterns={customPatterns} setIsPatternEditor={setIsPatternEditor}
           />
         </div>
       </div>
