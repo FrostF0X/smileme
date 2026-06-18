@@ -104,13 +104,62 @@ export default function App() {
 
   useEffect(() => { if (activeTool !== 'select') setSelectedShapeIndices([]); }, [activeTool]);
 
-  const handleShapeInteraction = (e, shape, index) => {
+  const transformingRef = useRef(null);
+
+  const getScreenCoordinates = (e) => {
+    if (!svgRef.current) return { x: 0, y: 0 };
+    const rect = svgRef.current.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  };
+
+  const getCanvasCoordinates = (e) => {
+    if (!svgRef.current) return { x: 0, y: 0 };
+    let pt = svgRef.current.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    if (mainGroupRef.current) {
+      try {
+        const ctm = mainGroupRef.current.getScreenCTM();
+        if (ctm) pt = pt.matrixTransform(ctm.inverse());
+      } catch (err) {}
+    } else {
+      const rect = svgRef.current.getBoundingClientRect();
+      pt.x -= rect.left;
+      pt.y -= rect.top;
+    }
+    return { x: pt.x, y: pt.y };
+  };
+
+  const handleShapeInteraction = (e, shape, index, actionType) => {
     if (activeTool === 'select' && e.type === 'pointerdown') {
       e.stopPropagation();
       if (!selectedShapeIndices.includes(index)) {
         setSelectedShapeIndices([index]);
       }
       setShowRightPanel(true);
+
+      if (svgRef.current) svgRef.current.setPointerCapture(e.pointerId);
+
+      const pt = getScreenCoordinates(e);
+      const canvasPt = getCanvasCoordinates(e);
+      const bounds = getShapeBounds(shape);
+
+      transformingRef.current = {
+        active: true,
+        pointerId: e.pointerId,
+        action: actionType,
+        index: index,
+        startX: pt.x,
+        startY: pt.y,
+        canvasStartX: canvasPt.x,
+        canvasStartY: canvasPt.y,
+        shapeStartX: shape.x || 0,
+        shapeStartY: shape.y || 0,
+        shapeStartRotation: shape.rotation || 0,
+        shapeCenterX: bounds.cx + (shape.x || 0),
+        shapeCenterY: bounds.cy + (shape.y || 0),
+        hasMoved: false
+      };
     }
   };
 
@@ -143,6 +192,51 @@ export default function App() {
   };
 
   const handleCanvasPointerMove = (e) => {
+    if (transformingRef.current && transformingRef.current.active && transformingRef.current.pointerId === e.pointerId) {
+      const pt = getScreenCoordinates(e);
+      const dx = pt.x - transformingRef.current.startX;
+      const dy = pt.y - transformingRef.current.startY;
+
+      const scale = canvasTransform.scale || 1;
+      const actualDx = dx / scale;
+      const actualDy = dy / scale;
+
+      const replaceHistory = transformingRef.current.hasMoved;
+
+      if (transformingRef.current.action === 'move') {
+        commitShapesFunctional((prev) => {
+          const next = [...prev];
+          next[transformingRef.current.index] = {
+            ...next[transformingRef.current.index],
+            x: transformingRef.current.shapeStartX + actualDx,
+            y: transformingRef.current.shapeStartY + actualDy
+          };
+          return next;
+        }, replaceHistory);
+      } else if (transformingRef.current.action === 'rotateScale') {
+        const canvasPt = getCanvasCoordinates(e);
+        const cx = transformingRef.current.shapeCenterX;
+        const cy = transformingRef.current.shapeCenterY;
+
+        const startAngle = Math.atan2(transformingRef.current.canvasStartY - cy, transformingRef.current.canvasStartX - cx);
+        const currentAngle = Math.atan2(canvasPt.y - cy, canvasPt.x - cx);
+
+        let angleDiff = (currentAngle - startAngle) * (180 / Math.PI);
+
+        commitShapesFunctional((prev) => {
+          const next = [...prev];
+          next[transformingRef.current.index] = {
+            ...next[transformingRef.current.index],
+            rotation: (transformingRef.current.shapeStartRotation + angleDiff) % 360
+          };
+          return next;
+        }, replaceHistory);
+      }
+
+      transformingRef.current.hasMoved = true;
+      return;
+    }
+
     if (activeTool === 'eraser') {
       handleEraserMove(e);
     } else {
@@ -151,6 +245,12 @@ export default function App() {
   };
 
   const handleCanvasPointerUp = (e) => {
+    if (transformingRef.current && transformingRef.current.active && transformingRef.current.pointerId === e.pointerId) {
+      transformingRef.current = null;
+      if (svgRef.current) svgRef.current.releasePointerCapture(e.pointerId);
+      return;
+    }
+
     if (activeTool === 'eraser') {
       erasingGesture.current.active = false;
       if (svgRef.current) svgRef.current.releasePointerCapture(e.pointerId);

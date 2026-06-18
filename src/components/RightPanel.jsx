@@ -46,6 +46,41 @@ export default function RightPanel({ showRightPanel, setShowRightPanel, bgImage,
         </div>
       )}
 
+      {activeTool === 'select' && activeShape && (
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-4 mt-4">
+          <h4 className="text-xs font-bold text-amber-600 uppercase tracking-wider mb-4 flex items-center gap-2">Przekształcenia</h4>
+
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <div>
+              <span className="text-[10px] text-slate-500 font-semibold block mb-1">Pozycja X</span>
+              <input type="number" value={activeShape.x !== undefined ? Math.round(activeShape.x) : 0} onChange={(e) => { const v = parseFloat(e.target.value); updateSelectedShape({ x: isNaN(v) ? 0 : v }); }} className="w-full text-xs p-1.5 border border-slate-300 rounded focus:ring-1 ring-amber-300 outline-none" />
+            </div>
+            <div>
+              <span className="text-[10px] text-slate-500 font-semibold block mb-1">Pozycja Y</span>
+              <input type="number" value={activeShape.y !== undefined ? Math.round(activeShape.y) : 0} onChange={(e) => { const v = parseFloat(e.target.value); updateSelectedShape({ y: isNaN(v) ? 0 : v }); }} className="w-full text-xs p-1.5 border border-slate-300 rounded focus:ring-1 ring-amber-300 outline-none" />
+            </div>
+          </div>
+
+          <div className="mb-3">
+            <span className="text-[10px] text-slate-500 font-semibold block mb-1">Obrót (Kąt)</span>
+            <input type="number" value={activeShape.rotation !== undefined ? Math.round(activeShape.rotation) : 0} onChange={(e) => { const v = parseFloat(e.target.value); updateSelectedShape({ rotation: isNaN(v) ? 0 : v }); }} className="w-full text-xs p-1.5 border border-slate-300 rounded focus:ring-1 ring-amber-300 outline-none mb-2" />
+            <div className="flex gap-1">
+              <button onClick={() => updateSelectedShape({ rotation: ((activeShape.rotation || 0) + 90) % 360 })} className="flex-1 text-[10px] bg-slate-100 hover:bg-slate-200 p-1 rounded font-medium">+90°</button>
+              <button onClick={() => updateSelectedShape({ rotation: ((activeShape.rotation || 0) + 180) % 360 })} className="flex-1 text-[10px] bg-slate-100 hover:bg-slate-200 p-1 rounded font-medium">+180°</button>
+              <button onClick={() => updateSelectedShape({ rotation: ((activeShape.rotation || 0) + 270) % 360 })} className="flex-1 text-[10px] bg-slate-100 hover:bg-slate-200 p-1 rounded font-medium">+270°</button>
+            </div>
+          </div>
+
+          <div className="mb-3">
+            <span className="text-[10px] text-slate-500 font-semibold block mb-1">Odbicie</span>
+            <div className="flex gap-2">
+              <button onClick={() => updateSelectedShape({ scaleX: (activeShape.scaleX !== undefined ? activeShape.scaleX : 1) * -1 })} className="flex-1 text-xs py-1.5 bg-slate-100 hover:bg-slate-200 rounded font-medium transition-colors text-slate-700 border border-slate-200">Poziome</button>
+              <button onClick={() => updateSelectedShape({ scaleY: (activeShape.scaleY !== undefined ? activeShape.scaleY : 1) * -1 })} className="flex-1 text-xs py-1.5 bg-slate-100 hover:bg-slate-200 rounded font-medium transition-colors text-slate-700 border border-slate-200">Pionowe</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {activeTool === 'select' && activeShape && activeShape.fillPattern && (
         <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
           <h4 className="text-xs font-bold text-amber-600 uppercase tracking-wider mb-4 flex items-center gap-2"><IconPattern /> Wzór Wypełnienia</h4>
