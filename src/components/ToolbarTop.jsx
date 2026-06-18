@@ -98,7 +98,7 @@ const EditControls = ({ activeShape, updateSelectedShape, setShowRightPanel, set
 export default function ToolbarTop({ activeTool, globalColor, setGlobalColor, forceCloseShape, setForceCloseShape, smoothAmount, setSmoothAmount, activeShape, updateSelectedShape, setShowRightPanel, setRightPanelTab, undo, redo, canUndo, canRedo, handleClear, fileInputRef, exportSVG, shapesCount }) {
   return (
     <div className="h-14 bg-white border-b border-slate-300 flex items-center justify-between px-4 z-20 shadow-sm shrink-0">
-      <div className="flex items-center gap-6 overflow-x-auto">
+      <div className="flex items-center gap-6 overflow-visible">
         {(activeTool === 'smoother' || activeTool === 'snapper' || activeTool === 'drawer') && (
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 shrink-0">
