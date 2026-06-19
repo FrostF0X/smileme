@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { processSnapper, processBezierSmoother, processDrawer } from '../utils/shapeProcessor';
+import { executeTool } from '../mcp/index';
 import { calculateNewCanvasState, calculateNewBgImageState } from '../utils/transformUtils';
 
 export default function useDrawing(svgRef, activeTool, globalColor, globalFillColor, globalFillPattern, globalPatternSettings, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage, canvasTransform, setCanvasTransform, transformTarget, mainGroupRef, onLassoComplete, selectedShapeIndices, updateSelectedShape) {
@@ -148,15 +148,15 @@ export default function useDrawing(svgRef, activeTool, globalColor, globalFillCo
           }
         } else if (currentStroke.length > 4) {
           try {
-            let newShape;
+            let newShapesArray;
             if (activeTool === 'snapper') {
-              newShape = processSnapper(currentStroke, globalColor, globalFillColor, globalFillPattern, globalPatternSettings);
+              newShapesArray = executeTool('drawSnappedShape', { points: currentStroke, color: globalColor, fillColor: globalFillColor, fillPattern: globalFillPattern, patSettings: globalPatternSettings }, shapes);
             } else if (activeTool === 'drawer') {
-              newShape = processDrawer(currentStroke, globalColor, smoothAmount, forceCloseShape, globalFillColor, globalFillPattern, globalPatternSettings);
+              newShapesArray = executeTool('drawRawPath', { points: currentStroke, color: globalColor, amount: smoothAmount, forceClosed: forceCloseShape, fillColor: globalFillColor, fillPattern: globalFillPattern, patSettings: globalPatternSettings }, shapes);
             } else {
-              newShape = processBezierSmoother(currentStroke, globalColor, smoothAmount, forceCloseShape, globalFillColor, globalFillPattern, globalPatternSettings);
+              newShapesArray = executeTool('drawSmoothedPath', { points: currentStroke, color: globalColor, amount: smoothAmount, forceClosed: forceCloseShape, fillColor: globalFillColor, fillPattern: globalFillPattern, patSettings: globalPatternSettings }, shapes);
             }
-            commitShapes([...shapes, newShape]);
+            commitShapes(newShapesArray);
           } catch (err) { console.error(err); }
         }
         setCurrentStroke([]);

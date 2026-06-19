@@ -9,6 +9,7 @@ import ColorPickerPopup from './components/ColorPickerPopup';
 import PatternEditor from './components/PatternEditor';
 import useDrawing from './hooks/useDrawing';
 import { exportCleanSVG } from './utils/svgExport';
+import { Transaction, executeTool } from './mcp/index';
 import { handlePatternUploadEvent, handleImageChangeEvent, handleFileChangeEvent } from './utils/fileHandlers';
 import { traceImageMultipleLayers } from './utils/traceUtils';
 import { pointInPolygon, getShapePoints } from './utils/shapeProcessor';
@@ -57,6 +58,25 @@ export default function App() {
   const erasingGesture = useRef({ active: false, hasErased: false });
   const undo = () => setHistoryObj(historyObj.undo());
   const redo = () => setHistoryObj(historyObj.redo());
+
+  const handleRunComputerTool = () => {
+    try {
+      const tx = new Transaction(historyObj);
+      tx.begin();
+      tx.addOperation((shapes) => {
+        return executeTool('createEllipse', {
+          cx: Math.random() * 400 + 100,
+          cy: Math.random() * 400 + 100,
+          rx: Math.random() * 50 + 20,
+          ry: Math.random() * 50 + 20,
+          color: globalColor
+        }, shapes);
+      });
+      setHistoryObj(tx.commit(historyObj));
+    } catch (err) {
+      console.error("Transaction Error", err);
+    }
+  };
 
   const [activeTool, setActiveTool] = useState('smoother');
   const [smoothAmount, setSmoothAmount] = useState(50);
@@ -295,7 +315,9 @@ export default function App() {
         smoothAmount={smoothAmount} setSmoothAmount={setSmoothAmount} activeShape={selectedShapeIndices.length > 0 ? shapes[selectedShapeIndices[0]] : null}
         updateSelectedShape={updateSelectedShape} setShowRightPanel={setShowRightPanel}
         undo={undo} redo={redo} canUndo={historyObj.canUndo()} canRedo={historyObj.canRedo()}
-        handleClear={() => { if (window.confirm("Wyczyścić wektory?")) commitShapes([]); }} fileInputRef={fileInputRef}
+        handleClear={() => { if (window.confirm("Wyczyścić wektory?")) commitShapes([]); }}
+        handleRunComputerTool={handleRunComputerTool}
+        fileInputRef={fileInputRef}
         exportSVG={() => exportCleanSVG(shapes, svgRef)} shapesCount={shapes.length}
       />
 

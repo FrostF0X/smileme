@@ -11,7 +11,7 @@ const SmoothControls = ({ forceCloseShape, setForceCloseShape, smoothAmount, set
   </div>
 );
 
-export default function ToolbarTop({ activeTool, forceCloseShape, setForceCloseShape, smoothAmount, setSmoothAmount, activeShape, undo, redo, canUndo, canRedo, handleClear, fileInputRef, exportSVG, shapesCount }) {
+export default function ToolbarTop({ activeTool, forceCloseShape, setForceCloseShape, smoothAmount, setSmoothAmount, activeShape, undo, redo, canUndo, canRedo, handleClear, handleRunComputerTool, fileInputRef, exportSVG, shapesCount }) {
   return (
     <header className="fixed top-0 w-full z-50 flex items-center justify-between px-panel-padding h-[56px] bg-[#111]/80 backdrop-blur-xl border-b border-[#FC0FC0]/20 shadow-sm glass-edge-top">
       <div className="flex items-center gap-6">
@@ -44,6 +44,7 @@ export default function ToolbarTop({ activeTool, forceCloseShape, setForceCloseS
         <button onClick={redo} disabled={!canRedo} className="p-2 rounded-full text-on-surface-variant hover:bg-[#00FFFF]/10 hover:text-[#00FFFF] transition-colors cursor-pointer active:scale-95 disabled:opacity-30">
             <span className="material-symbols-outlined text-[20px]">redo</span>
         </button>
+        <button onClick={handleRunComputerTool} title="Auto Kształt (Demo MCP)" className="px-3 py-1.5 rounded-md text-[#FFD700] hover:bg-[#FFD700]/10 font-medium text-xs border border-[#FFD700]/30 transition-colors cursor-pointer active:scale-95">Auto Kształt</button>
         <button className="p-2 rounded-full text-on-surface-variant hover:bg-[#FFD700]/10 hover:text-[#FFD700] transition-colors cursor-pointer active:scale-95">
             <span className="material-symbols-outlined text-[20px]">settings</span>
         </button>
