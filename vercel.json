@@ -1,0 +1,8 @@
+{
+  "redirects": [
+    { "source": "/", "destination": "/smileme/", "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/smileme/:path*", "destination": "/:path*" }
+  ]
+}
