@@ -4,7 +4,7 @@ import { getShapeBounds } from '../utils/shapeProcessor';
 
 export default function ShapeRenderer({ shape, index, isSelected, activeTool, handleShapeInteraction }) {
   const shapeProps = {
-    fill: shape.fillPattern ? `url(#pat-${index})` : "none",
+    fill: shape.fillPattern ? `url(#pat-${index})` : (shape.fillColor || "none"),
     stroke: shape.color, strokeWidth: 4, strokeLinecap: "round", strokeLinejoin: "round",
     onPointerDown: (e) => handleShapeInteraction(e, shape, index, 'move'),
     onPointerEnter: (e) => handleShapeInteraction(e, shape, index, 'move'),
