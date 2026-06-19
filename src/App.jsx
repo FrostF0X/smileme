@@ -235,13 +235,14 @@ export default function App() {
       const actualDy = dy / scale;
 
       const replaceHistory = transformingRef.current.hasMoved;
+      const { index, shapeStartX, shapeStartY } = transformingRef.current;
 
       commitShapesFunctional((prev) => {
         const next = [...prev];
-        next[transformingRef.current.index] = {
-          ...next[transformingRef.current.index],
-          x: transformingRef.current.shapeStartX + actualDx,
-          y: transformingRef.current.shapeStartY + actualDy
+        next[index] = {
+          ...next[index],
+          x: shapeStartX + actualDx,
+          y: shapeStartY + actualDy
         };
         return next;
       }, replaceHistory);
