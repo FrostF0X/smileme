@@ -46,7 +46,7 @@ export const exportCleanSVG = async (shapes, svgRef) => {
 
   let shapesHtml = '';
   shapes.forEach((s, i) => {
-    const fillStr = s.fillPattern ? `url(#exp-pat-${i})` : 'none';
+    const fillStr = s.fillPattern ? `url(#exp-pat-${i})` : (s.fillColor || 'none');
     if (s.type === 'ellipse') {
       shapesHtml += `<ellipse cx="${s.cx}" cy="${s.cy}" rx="${s.rx}" ry="${s.ry}" fill="${fillStr}" stroke="${s.color}" stroke-width="4" transform="rotate(${s.angle} ${s.cx} ${s.cy})" stroke-linecap="round" stroke-linejoin="round" />`;
     } else if (s.type === 'bezierPath' || s.type === 'rawPath') {
