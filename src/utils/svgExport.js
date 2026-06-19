@@ -1,3 +1,5 @@
+import { getShapeBounds } from './shapeProcessor';
+
 export const getPatternDetails = (s) => {
   const sc = s.patternScale || 1;
   const sp = s.patternSpacing || 0;
@@ -46,48 +48,26 @@ export const exportCleanSVG = async (shapes, svgRef) => {
 
   let shapesHtml = '';
   shapes.forEach((s, i) => {
-    const fillStr = s.fillPattern ? `url(#exp-pat-${i})` : 'none';
+    const fillStr = s.fillPattern ? `url(#exp-pat-${i})` : (s.fillColor || 'none');
+
+    const bounds = getShapeBounds(s);
+    const cx = bounds.cx;
+    const cy = bounds.cy;
+    const transform = `translate(${s.x || 0}, ${s.y || 0}) rotate(${s.rotation || 0} ${cx} ${cy}) translate(${cx}, ${cy}) scale(${s.scaleX !== undefined ? s.scaleX : 1}, ${s.scaleY !== undefined ? s.scaleY : 1}) translate(${-cx}, ${-cy})`;
+
+    shapesHtml += `<g transform="${transform}">`;
     if (s.type === 'ellipse') {
       shapesHtml += `<ellipse cx="${s.cx}" cy="${s.cy}" rx="${s.rx}" ry="${s.ry}" fill="${fillStr}" stroke="${s.color}" stroke-width="4" transform="rotate(${s.angle} ${s.cx} ${s.cy})" stroke-linecap="round" stroke-linejoin="round" />`;
     } else if (s.type === 'bezierPath' || s.type === 'rawPath') {
       const d = s.d || `M ${s.points.map(p => `${p.x},${p.y}`).join(' L ')}`;
       shapesHtml += `<path d="${d}" fill="${fillStr}" stroke="${s.color}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />`;
     }
+    shapesHtml += `</g>`;
   });
 
   const svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${rect.width} ${rect.height}" width="${rect.width}" height="${rect.height}">${defsHtml}${shapesHtml}</svg>`;
 
   const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-
-  if (window.showSaveFilePicker) {
-    try {
-      const handle = await window.showSaveFilePicker({
-        suggestedName: 'Rysunek_Pro.svg',
-        types: [{ description: 'Plik SVG', accept: { 'image/svg+xml': ['.svg'] } }],
-      });
-      const writable = await handle.createWritable();
-      await writable.write(svgString);
-      await writable.close();
-      return;
-    } catch (err) {
-      if (err.name === 'AbortError') return;
-    }
-  }
-
-  const file = new File([blob], 'Rysunek_Pro.svg', { type: 'image/svg+xml' });
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    try {
-      await navigator.share({
-        files: [file],
-        title: 'Rysunek_Pro.svg',
-      });
-      return;
-    } catch (err) {
-      // Ignorujemy błędy, np. gdy użytkownik anuluje udostępnianie,
-      // lub w przypadku niepowodzenia i próbujemy użyć elementu 'a'
-      console.error("Błąd podczas próby udostępnienia/zapisu pliku:", err);
-    }
-  }
 
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
