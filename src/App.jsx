@@ -81,7 +81,7 @@ export default function App() {
   const [activeTool, setActiveTool] = useState('smoother');
   const [smoothAmount, setSmoothAmount] = useState(50);
   const [forceCloseShape, setForceCloseShape] = useState(true);
-  const [globalColor, setGlobalColor] = useState('#000000');
+  const [globalColor, setGlobalColor] = useState('#FC0FC0');
   const [globalStrokeWidth, setGlobalStrokeWidth] = useState(4);
   const [globalFillColor, setGlobalFillColor] = useState(null);
   const [globalFillPattern, setGlobalFillPattern] = useState(null);
