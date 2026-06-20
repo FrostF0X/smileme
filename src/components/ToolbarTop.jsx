@@ -11,14 +11,24 @@ const SmoothControls = ({ forceCloseShape, setForceCloseShape, smoothAmount, set
   </div>
 );
 
-const StrokeControls = ({ strokeWidth, setStrokeWidth }) => (
-  <div className="flex items-center gap-3 border-l border-white/10 pl-4 shrink-0">
-    <span className="text-sm text-on-surface-variant ml-2">Grubość kreski:</span>
-    <input type="range" min="1" max="50" step="1" value={strokeWidth} onChange={(e) => setStrokeWidth(parseInt(e.target.value))} className="w-20 accent-[#00FFFF]" />
-  </div>
-);
+const StrokeControls = ({ strokeWidth, setStrokeWidth }) => {
+  const handleChange = (e) => {
+    let val = parseInt(e.target.value);
+    if (isNaN(val)) val = 1;
+    if (val < 1) val = 1;
+    if (val > 100) val = 100;
+    setStrokeWidth(val);
+  };
+  return (
+    <div className="flex items-center gap-3 border-l border-white/10 pl-4 shrink-0">
+      <span className="text-sm text-on-surface-variant ml-2">Grubość kreski:</span>
+      <input type="range" min="1" max="50" step="1" value={strokeWidth} onChange={handleChange} className="w-20 accent-[#00FFFF]" />
+      <input type="number" min="1" max="100" value={strokeWidth} onChange={handleChange} className="w-12 h-6 bg-surface text-white text-xs border border-white/20 rounded px-1 text-center" />
+    </div>
+  );
+};
 
-export default function ToolbarTop({ activeTool, forceCloseShape, setForceCloseShape, smoothAmount, setSmoothAmount, globalStrokeWidth, setGlobalStrokeWidth, activeShape, undo, redo, canUndo, canRedo, handleClear, handleRunComputerTool, fileInputRef, exportSVG, shapesCount }) {
+export default function ToolbarTop({ activeTool, forceCloseShape, setForceCloseShape, smoothAmount, setSmoothAmount, globalStrokeWidth, setGlobalStrokeWidth, activeShape, updateSelectedShape, undo, redo, canUndo, canRedo, handleClear, handleRunComputerTool, fileInputRef, exportSVG, shapesCount }) {
   return (
     <header className="fixed top-0 w-full z-50 flex items-center justify-between px-panel-padding h-[56px] bg-[#111]/80 backdrop-blur-xl border-b border-[#FC0FC0]/20 shadow-sm glass-edge-top">
       <div className="flex items-center gap-6">
@@ -33,9 +43,15 @@ export default function ToolbarTop({ activeTool, forceCloseShape, setForceCloseS
           <div className="px-3 py-1.5 rounded-md text-on-surface-variant font-body-md text-body-md hover:bg-surface-variant/50 transition-colors cursor-pointer active:scale-95" onClick={exportSVG}>Export</div>
           <div className="px-3 py-1.5 rounded-md text-on-surface-variant font-body-md text-body-md hover:bg-surface-variant/50 transition-colors cursor-pointer active:scale-95" onClick={handleClear}>Clear</div>
 
-          {(activeTool === 'smoother' || activeTool === 'snapper' || activeTool === 'drawer') && (
+          {((activeTool === 'smoother' || activeTool === 'snapper' || activeTool === 'drawer') || (activeTool === 'select' && activeShape)) && (
             <div className="flex items-center ml-4">
-              <StrokeControls strokeWidth={globalStrokeWidth} setStrokeWidth={setGlobalStrokeWidth} />
+              <StrokeControls
+                strokeWidth={activeTool === 'select' && activeShape ? (activeShape.strokeWidth !== undefined ? activeShape.strokeWidth : 4) : globalStrokeWidth}
+                setStrokeWidth={(val) => {
+                  if (activeTool === 'select' && activeShape) updateSelectedShape({ strokeWidth: val });
+                  else setGlobalStrokeWidth(val);
+                }}
+              />
               {(activeTool === 'smoother' || activeTool === 'drawer') && <SmoothControls forceCloseShape={forceCloseShape} setForceCloseShape={setForceCloseShape} smoothAmount={smoothAmount} setSmoothAmount={setSmoothAmount} />}
             </div>
           )}
