@@ -13,7 +13,7 @@ const SmoothControls = ({ forceCloseShape, setForceCloseShape, smoothAmount, set
 
 export default function ToolbarTop({ activeTool, forceCloseShape, setForceCloseShape, smoothAmount, setSmoothAmount, activeShape, undo, redo, canUndo, canRedo, handleClear, handleRunComputerTool, fileInputRef, exportSVG, shapesCount }) {
   return (
-    <header className="fixed top-0 w-full z-50 flex items-center justify-between px-panel-padding h-[56px] bg-[#111]/80 backdrop-blur-xl border-b border-[#FC0FC0]/20 shadow-sm glass-edge-top">
+    <header className="absolute top-0 w-full z-50 flex items-center justify-between px-panel-padding h-[56px] bg-[#111]/80 backdrop-blur-xl border-b border-[#FC0FC0]/20 shadow-sm glass-edge-top">
       <div className="flex items-center gap-6">
         {/* Brand */}
         <div className="font-display-lg text-[24px] font-bold text-[#FC0FC0] tracking-tighter leading-none flex items-center">

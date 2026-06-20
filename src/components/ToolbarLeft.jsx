@@ -34,7 +34,7 @@ export default function ToolbarLeft({
   };
 
   return (
-    <aside className="fixed left-0 top-[56px] bottom-[32px] z-40 flex flex-col items-center py-4 bg-[#111]/80 backdrop-blur-xl border-r border-[#00FFFF]/20 shadow-[0_0_20px_rgba(0,255,255,0.05)] w-[56px] glass-edge-left transition-all duration-200 ease-in-out">
+    <aside className="absolute left-0 top-[56px] bottom-[32px] z-40 flex flex-col items-center py-4 bg-[#111]/80 backdrop-blur-xl border-r border-[#00FFFF]/20 shadow-[0_0_20px_rgba(0,255,255,0.05)] w-[56px] glass-edge-left transition-all duration-200 ease-in-out">
       <div className="flex-1 flex flex-col items-center gap-2 w-full px-2">
         {/* Tools */}
         <button onClick={() => setActiveTool('select')} className={getToolClass('select', '#FC0FC0')} title="Select">
