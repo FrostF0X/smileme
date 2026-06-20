@@ -1,17 +1,25 @@
 from playwright.sync_api import sync_playwright
 
-def run():
+def test_app():
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page()
-        page.on("pageerror", lambda err: print(f"Page error: {err}"))
-        page.on("console", lambda msg: print(f"Console message: {msg.text}"))
-        page.goto("http://localhost:4173/")
-        try:
-            page.wait_for_selector("svg", timeout=10000)
-            print("UI is working. Found canvas SVG.")
-        except Exception as e:
-            print(f"Failed to find SVG: {e}")
+
+        errors = []
+        page.on("pageerror", lambda err: errors.append(err.message))
+        page.on("console", lambda msg: errors.append(msg.text) if msg.type == "error" else None)
+
+        page.goto('http://localhost:4173/')
+        page.wait_for_selector('canvas, svg', timeout=5000)
+
+        if len(errors) > 0:
+            print("Console Errors Found:")
+            for err in errors:
+                print(f"- {err}")
+            exit(1)
+
+        print("Application loaded successfully with no console errors.")
         browser.close()
 
-run()
+if __name__ == "__main__":
+    test_app()
