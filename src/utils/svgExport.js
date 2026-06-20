@@ -57,10 +57,10 @@ export const exportCleanSVG = async (shapes, svgRef) => {
 
     shapesHtml += `<g transform="${transform}">`;
     if (s.type === 'ellipse') {
-      shapesHtml += `<ellipse cx="${s.cx}" cy="${s.cy}" rx="${s.rx}" ry="${s.ry}" fill="${fillStr}" stroke="${s.color}" stroke-width="4" transform="rotate(${s.angle} ${s.cx} ${s.cy})" stroke-linecap="round" stroke-linejoin="round" />`;
+      shapesHtml += `<ellipse cx="${s.cx}" cy="${s.cy}" rx="${s.rx}" ry="${s.ry}" fill="${fillStr}" stroke="${s.color}" stroke-width="${s.strokeWidth !== undefined ? s.strokeWidth : 4}" transform="rotate(${s.angle} ${s.cx} ${s.cy})" stroke-linecap="round" stroke-linejoin="round" />`;
     } else if (s.type === 'bezierPath' || s.type === 'rawPath') {
       const d = s.d || `M ${s.points.map(p => `${p.x},${p.y}`).join(' L ')}`;
-      shapesHtml += `<path d="${d}" fill="${fillStr}" stroke="${s.color}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />`;
+      shapesHtml += `<path d="${d}" fill="${fillStr}" stroke="${s.color}" stroke-width="${s.strokeWidth !== undefined ? s.strokeWidth : 4}" stroke-linecap="round" stroke-linejoin="round" />`;
     }
     shapesHtml += `</g>`;
   });
