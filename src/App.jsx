@@ -356,8 +356,6 @@ export default function App() {
       <footer className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between px-4 bg-[#111]/90 backdrop-blur-md border-t border-[#00FFFF]/20 h-8 shadow-[0_-2px_10px_rgba(0,255,255,0.05)]">
         <div className="flex items-center gap-4 text-on-surface-variant font-label-sm text-label-sm cursor-default">
           <span className="hover:text-[#FC0FC0] transition-colors">Zoom {Math.round((canvasTransform.scale || 1) * 100)}%</span>
-          <span className="w-px h-3 bg-white/10"></span>
-          <span className="hover:text-[#FC0FC0] transition-colors">Artboard 1</span>
         </div>
         <div className="flex items-center gap-4 text-on-surface-variant font-label-sm text-label-sm cursor-default">
           <span className="hover:text-[#00FFFF] transition-colors flex items-center gap-1">
