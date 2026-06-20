@@ -57,7 +57,7 @@ export default function ColorPickerPopup({
   };
 
   return (
-    <div className="absolute top-16 left-16 w-72 bg-[#1A1A1A] border border-[#333333] shadow-2xl rounded-xl flex flex-col z-50 p-4">
+    <div className="absolute bottom-16 left-16 w-72 bg-[#1A1A1A] border border-[#333333] shadow-2xl rounded-xl flex flex-col z-50 p-4">
       <div className="flex justify-between items-center mb-4 pb-2 border-b border-[#333333]">
         <h3 className="font-bold text-white uppercase text-xs tracking-wider">
           {isFill ? 'Kolor Wypełnienia' : 'Kolor Obrysu'}
@@ -67,11 +67,11 @@ export default function ColorPickerPopup({
 
       {/* Colors Grid */}
       <div className="mb-4">
-        <div className="grid grid-cols-4 gap-2">
+        <div className="flex flex-wrap gap-2 justify-start">
           {isFill && (
             <button
               onClick={handleNoneSelect}
-              className={`aspect-square rounded-lg border-2 relative hover:scale-105 transition-transform ${!currentColor && !currentPattern ? 'border-[#FC0FC0]' : 'border-[#333333] hover:border-[#444444]'}`}
+              className={`w-8 h-8 rounded-md border-2 relative hover:scale-105 transition-transform ${!currentColor && !currentPattern ? 'border-[#FC0FC0]' : 'border-[#333333] hover:border-[#444444]'}`}
               title="Brak"
             >
               <div className="absolute inset-0 m-auto w-[120%] h-0.5 bg-red-500 transform rotate-45 -translate-x-1"></div>
@@ -81,7 +81,7 @@ export default function ColorPickerPopup({
             <button
               key={c}
               onClick={() => handleColorSelect(c)}
-              className={`aspect-square rounded-lg border-2 hover:scale-105 transition-transform ${currentColor === c && !currentPattern ? 'border-[#FC0FC0] ring-2 ring-[#FC0FC0]/50 ring-offset-1 ring-offset-[#1A1A1A]' : 'border-[#333333] hover:border-[#444444]'}`}
+              className={`w-8 h-8 rounded-md border-2 hover:scale-105 transition-transform ${currentColor === c && !currentPattern ? 'border-[#FC0FC0] ring-2 ring-[#FC0FC0]/50 ring-offset-1 ring-offset-[#1A1A1A]' : 'border-[#333333] hover:border-[#444444]'}`}
               style={{ backgroundColor: c }}
             />
           ))}
@@ -95,19 +95,19 @@ export default function ColorPickerPopup({
             <IconPattern className="w-4 h-4" /> Wzory
           </h4>
 
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            <button onClick={() => handlePatternSelect('dots')} className={`aspect-square rounded border-2 flex items-center justify-center ${currentPattern === 'dots' ? 'border-[#FC0FC0]' : 'border-[#333333] hover:border-[#444444]'}`}>
+          <div className="flex flex-wrap gap-2 mb-4 justify-start">
+            <button onClick={() => handlePatternSelect('dots')} className={`w-8 h-8 rounded border-2 flex items-center justify-center ${currentPattern === 'dots' ? 'border-[#FC0FC0]' : 'border-[#333333] hover:border-[#444444]'}`}>
               <div className="w-2 h-2 rounded-full bg-gray-500 shadow-[4px_4px_0_0_#6b7280,-4px_-4px_0_0_#6b7280,-4px_4px_0_0_#6b7280,4px_-4px_0_0_#6b7280]"></div>
             </button>
-            <button onClick={() => handlePatternSelect('grid')} className={`aspect-square rounded border-2 flex items-center justify-center ${currentPattern === 'grid' ? 'border-[#FC0FC0]' : 'border-[#333333] hover:border-[#444444]'}`}>
+            <button onClick={() => handlePatternSelect('grid')} className={`w-8 h-8 rounded border-2 flex items-center justify-center ${currentPattern === 'grid' ? 'border-[#FC0FC0]' : 'border-[#333333] hover:border-[#444444]'}`}>
               <div className="w-4 h-4 border border-gray-500 grid grid-cols-2 grid-rows-2"><div className="border-r border-b border-gray-500"></div><div className="border-b border-gray-500"></div><div className="border-r border-gray-500"></div><div></div></div>
             </button>
-            <button onClick={() => handlePatternSelect('lines')} className={`aspect-square rounded border-2 flex items-center justify-center ${currentPattern === 'lines' ? 'border-[#FC0FC0]' : 'border-[#333333] hover:border-[#444444]'}`}>
+            <button onClick={() => handlePatternSelect('lines')} className={`w-8 h-8 rounded border-2 flex items-center justify-center ${currentPattern === 'lines' ? 'border-[#FC0FC0]' : 'border-[#333333] hover:border-[#444444]'}`}>
               <div className="flex flex-col gap-1 w-4"><div className="h-0.5 bg-gray-500"></div><div className="h-0.5 bg-gray-500"></div><div className="h-0.5 bg-gray-500"></div></div>
             </button>
 
             {(customPatterns || []).map((pat, i) => (
-              <button key={`custom-${i}`} onClick={() => handlePatternSelect('custom', pat)} className={`aspect-square rounded border-2 relative overflow-hidden ${currentPattern === 'custom' && currentCustomSvg === pat ? 'border-[#FC0FC0]' : 'border-[#333333] hover:border-[#444444]'}`}>
+              <button key={`custom-${i}`} onClick={() => handlePatternSelect('custom', pat)} className={`w-8 h-8 rounded border-2 relative overflow-hidden ${currentPattern === 'custom' && currentCustomSvg === pat ? 'border-[#FC0FC0]' : 'border-[#333333] hover:border-[#444444]'}`}>
                 <img src={pat} alt="Wzór" className="w-full h-full object-cover" />
               </button>
             ))}
@@ -116,7 +116,7 @@ export default function ColorPickerPopup({
           <button onClick={() => { setIsPatternEditor(true); setShowColorPopup(false); }} className="w-full py-1.5 bg-[#333333] hover:bg-[#444444] text-white text-xs font-semibold rounded border border-[#555555] transition-colors mb-4">Nowy Wzór...</button>
 
           {currentPattern && (
-            <div className="bg-[#222222] p-3 rounded-lg border border-[#333333]">
+            <div className="bg-[#222222] p-3 rounded-md border border-[#333333]">
               <label className="block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider">Układ (Tiling)</label>
               <select className="w-full text-xs border border-[#444444] rounded p-1 mb-3 bg-[#1A1A1A] outline-none text-white" value={currentSettings.layout} onChange={(e) => updateSettings({ patternLayout: e.target.value })}>
                 <option value="grid">Siatka</option><option value="offset">Ze zjazdem (Cegła)</option><option value="hex">Heksagonalnie</option>
