@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { executeTool } from '../mcp/index';
 import { calculateNewCanvasState, calculateNewBgImageState } from '../utils/transformUtils';
 
-export default function useDrawing(svgRef, activeTool, globalColor, globalFillColor, globalFillPattern, globalPatternSettings, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage, canvasTransform, setCanvasTransform, transformTarget, mainGroupRef, onLassoComplete, selectedShapeIndices, updateSelectedShape) {
+export default function useDrawing(svgRef, activeTool, globalColor, globalStrokeWidth, globalFillColor, globalFillPattern, globalPatternSettings, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage, canvasTransform, setCanvasTransform, transformTarget, mainGroupRef, onLassoComplete, selectedShapeIndices, updateSelectedShape) {
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentStroke, setCurrentStroke] = useState([]);
   const activePointers = useRef(new Map());
@@ -150,11 +150,11 @@ export default function useDrawing(svgRef, activeTool, globalColor, globalFillCo
           try {
             let newShapesArray;
             if (activeTool === 'snapper') {
-              newShapesArray = executeTool('drawSnappedShape', { points: currentStroke, color: globalColor, fillColor: globalFillColor, fillPattern: globalFillPattern, patSettings: globalPatternSettings }, shapes);
+              newShapesArray = executeTool('drawSnappedShape', { points: currentStroke, color: globalColor, strokeWidth: globalStrokeWidth, fillColor: globalFillColor, fillPattern: globalFillPattern, patSettings: globalPatternSettings }, shapes);
             } else if (activeTool === 'drawer') {
-              newShapesArray = executeTool('drawRawPath', { points: currentStroke, color: globalColor, amount: smoothAmount, forceClosed: forceCloseShape, fillColor: globalFillColor, fillPattern: globalFillPattern, patSettings: globalPatternSettings }, shapes);
+              newShapesArray = executeTool('drawRawPath', { points: currentStroke, color: globalColor, strokeWidth: globalStrokeWidth, amount: smoothAmount, forceClosed: forceCloseShape, fillColor: globalFillColor, fillPattern: globalFillPattern, patSettings: globalPatternSettings }, shapes);
             } else {
-              newShapesArray = executeTool('drawSmoothedPath', { points: currentStroke, color: globalColor, amount: smoothAmount, forceClosed: forceCloseShape, fillColor: globalFillColor, fillPattern: globalFillPattern, patSettings: globalPatternSettings }, shapes);
+              newShapesArray = executeTool('drawSmoothedPath', { points: currentStroke, color: globalColor, strokeWidth: globalStrokeWidth, amount: smoothAmount, forceClosed: forceCloseShape, fillColor: globalFillColor, fillPattern: globalFillPattern, patSettings: globalPatternSettings }, shapes);
             }
             commitShapes(newShapesArray);
           } catch (err) { console.error(err); }
@@ -162,7 +162,7 @@ export default function useDrawing(svgRef, activeTool, globalColor, globalFillCo
         setCurrentStroke([]);
       }
     }
-  }, [isDrawing, currentStroke, activeTool, globalColor, smoothAmount, forceCloseShape, commitShapes, shapes, svgRef, onLassoComplete]);
+  }, [isDrawing, currentStroke, activeTool, globalColor, globalStrokeWidth, smoothAmount, forceCloseShape, commitShapes, shapes, svgRef, onLassoComplete]);
 
   return { isDrawing, currentStroke, handlePointerDown, handlePointerMove, handlePointerUp };
 }

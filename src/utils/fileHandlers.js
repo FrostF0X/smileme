@@ -40,10 +40,10 @@ export const handleFileChangeEvent = (e, commitShapes, shapes) => {
         let angle = 0;
         const match = (el.getAttribute('transform') || '').match(/rotate\(([^ ]+) /);
         if (match) angle = parseFloat(match[1]);
-        newShapes.push({ type: 'ellipse', cx: parseFloat(el.getAttribute('cx') || 0), cy: parseFloat(el.getAttribute('cy') || 0), rx: parseFloat(el.getAttribute('rx') || 0), ry: parseFloat(el.getAttribute('ry') || 0), angle, color: el.getAttribute('stroke') || '#000000', fillPattern: null });
+        newShapes.push({ type: 'ellipse', cx: parseFloat(el.getAttribute('cx') || 0), cy: parseFloat(el.getAttribute('cy') || 0), rx: parseFloat(el.getAttribute('rx') || 0), ry: parseFloat(el.getAttribute('ry') || 0), angle, color: el.getAttribute('stroke') || '#000000', strokeWidth: parseFloat(el.getAttribute('stroke-width')) || 4, fillPattern: null });
       });
       doc.querySelectorAll('path').forEach(el => {
-        newShapes.push({ type: 'bezierPath', d: el.getAttribute('d'), color: el.getAttribute('stroke') || '#000000', fillPattern: null });
+        newShapes.push({ type: 'bezierPath', d: el.getAttribute('d'), color: el.getAttribute('stroke') || '#000000', strokeWidth: parseFloat(el.getAttribute('stroke-width')) || 4, fillPattern: null });
       });
       if (newShapes.length > 0) commitShapes([...shapes, ...newShapes]);
     } catch (err) { alert("Błąd odczytu SVG."); }

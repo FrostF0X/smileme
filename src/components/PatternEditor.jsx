@@ -21,7 +21,7 @@ export default function PatternEditor({ onClose, onSave }) {
   const [globalColor, setGlobalColor] = useState('#000000');
 
   const { isDrawing, currentStroke, handlePointerDown, handlePointerMove, handlePointerUp } = useDrawing(
-    svgRef, activeTool, globalColor, 50, false, commitShapes, shapes, { url: null }, () => {}, { x: 0, y: 0, scale: 1, angle: 0 }, () => {}, 'canvas', mainGroupRef, () => {}
+    svgRef, activeTool, globalColor, 4, null, null, { layout: 'grid', scale: 1, spacing: 0 }, 50, false, commitShapes, shapes, { url: null }, () => {}, { x: 0, y: 0, scale: 1, angle: 0 }, () => {}, 'canvas', mainGroupRef, () => {}, [], () => {}
   );
 
   const erasingGesture = useRef({ active: false, hasErased: false });

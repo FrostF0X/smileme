@@ -3,7 +3,7 @@ import ShapeRenderer from './ShapeRenderer';
 import PatternDefs from './PatternDefs';
 
 export default function Canvas({
-  svgRef, mainGroupRef, canvasTransform, shapes, currentStroke, bgImage, isDrawing, activeTool, globalColor,
+  svgRef, mainGroupRef, canvasTransform, shapes, currentStroke, bgImage, isDrawing, activeTool, globalColor, globalStrokeWidth,
   handlePointerDown, handlePointerMove, handlePointerUp,
   selectedShapeIndices, handleShapeInteraction
 }) {
@@ -52,7 +52,7 @@ export default function Canvas({
           ))}
 
             {currentStroke.length > 0 && activeTool !== 'eraser' && activeTool !== 'select' && activeTool !== 'pan' && (
-              <path d={`M ${currentStroke.map(p => `${p.x},${p.y}`).join(' L ')}`} fill="none" stroke={globalColor} strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" opacity={0.6} />
+              <path d={`M ${currentStroke.map(p => `${p.x},${p.y}`).join(' L ')}`} fill="none" stroke={globalColor} strokeWidth={globalStrokeWidth || 4} strokeLinecap="round" strokeLinejoin="round" opacity={0.6} />
             )}
             {currentStroke.length > 0 && activeTool === 'select' && (
               <path d={`M ${currentStroke.map(p => `${p.x},${p.y}`).join(' L ')} Z`} fill="rgba(14, 165, 233, 0.1)" stroke="#0ea5e9" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" strokeDasharray="5,5" opacity={0.8} style={{ pointerEvents: 'none' }} />
