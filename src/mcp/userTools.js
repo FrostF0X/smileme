@@ -20,6 +20,7 @@ export const userTools = [
           description: "Array of raw pointer coordinates."
         },
         color: { type: "string", description: "Stroke color" },
+        strokeWidth: { type: "number", description: "Stroke width" },
         amount: { type: "number", description: "Smoothing amount" },
         forceClosed: { type: "boolean", description: "Force the path to close" },
         fillColor: { type: "string", description: "Fill color (optional)" },
@@ -29,8 +30,8 @@ export const userTools = [
       required: ["points", "color", "amount", "forceClosed"]
     },
     execute: (args, currentShapes = []) => {
-      const { points, color, amount, forceClosed, fillColor, fillPattern, patSettings } = args;
-      const newShape = processBezierSmoother(points, color, amount, forceClosed, fillColor, fillPattern, patSettings);
+      const { points, color, strokeWidth, amount, forceClosed, fillColor, fillPattern, patSettings } = args;
+      const newShape = processBezierSmoother(points, color, strokeWidth, amount, forceClosed, fillColor, fillPattern, patSettings);
       return [...currentShapes, newShape];
     }
   },
@@ -53,6 +54,7 @@ export const userTools = [
           description: "Array of raw pointer coordinates."
         },
         color: { type: "string", description: "Stroke color" },
+        strokeWidth: { type: "number", description: "Stroke width" },
         amount: { type: "number", description: "Smoothing amount for drawer" },
         forceClosed: { type: "boolean", description: "Force the path to close" },
         fillColor: { type: "string", description: "Fill color (optional)" },
@@ -62,8 +64,8 @@ export const userTools = [
       required: ["points", "color", "amount", "forceClosed"]
     },
     execute: (args, currentShapes = []) => {
-      const { points, color, amount, forceClosed, fillColor, fillPattern, patSettings } = args;
-      const newShape = processDrawer(points, color, amount, forceClosed, fillColor, fillPattern, patSettings);
+      const { points, color, strokeWidth, amount, forceClosed, fillColor, fillPattern, patSettings } = args;
+      const newShape = processDrawer(points, color, strokeWidth, amount, forceClosed, fillColor, fillPattern, patSettings);
       return [...currentShapes, newShape];
     }
   },
@@ -86,6 +88,7 @@ export const userTools = [
           description: "Array of raw pointer coordinates."
         },
         color: { type: "string", description: "Stroke color" },
+        strokeWidth: { type: "number", description: "Stroke width" },
         fillColor: { type: "string", description: "Fill color (optional)" },
         fillPattern: { type: "string", description: "Fill pattern (optional)" },
         patSettings: { type: "object", description: "Pattern settings (optional)" }
@@ -93,8 +96,8 @@ export const userTools = [
       required: ["points", "color"]
     },
     execute: (args, currentShapes = []) => {
-      const { points, color, fillColor, fillPattern, patSettings } = args;
-      const newShape = processSnapper(points, color, fillColor, fillPattern, patSettings);
+      const { points, color, strokeWidth, fillColor, fillPattern, patSettings } = args;
+      const newShape = processSnapper(points, color, strokeWidth, fillColor, fillPattern, patSettings);
       return [...currentShapes, newShape];
     }
   }

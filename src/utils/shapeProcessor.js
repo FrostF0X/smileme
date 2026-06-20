@@ -1,7 +1,7 @@
 import Ellipse from '../models/Ellipse';
 import Path from '../models/Path';
 
-export const processSnapper = (points, strokeColor, fillColor, fillPattern, patSettings) => {
+export const processSnapper = (points, strokeColor, strokeWidth, fillColor, fillPattern, patSettings) => {
   const pStart = points[0], pEnd = points[points.length - 1];
   const closureDistance = Math.hypot(pEnd.x - pStart.x, pEnd.y - pStart.y);
   let pathLength = 0;
@@ -25,9 +25,9 @@ export const processSnapper = (points, strokeColor, fillColor, fillPattern, patS
       const d = Math.abs((p2.x - p1.x) * (p1.y - points[i].y) - (p1.x - points[i].x) * (p2.y - p1.y)) / maxD;
       if (d > maxRy) maxRy = d;
     }
-    return new Ellipse({ cx, cy, rx, ry: maxRy, angle: angleDeg, color: strokeColor, fillColor, fillPattern, patternLayout: patSettings?.layout, patternScale: patSettings?.scale, patternSpacing: patSettings?.spacing, customPatternSvg: patSettings?.customSvg });
+    return new Ellipse({ cx, cy, rx, ry: maxRy, angle: angleDeg, color: strokeColor, strokeWidth, fillColor, fillPattern, patternLayout: patSettings?.layout, patternScale: patSettings?.scale, patternSpacing: patSettings?.spacing, customPatternSvg: patSettings?.customSvg });
   } else {
-    return new Path({ type: 'rawPath', points: [...points], color: strokeColor, fillColor, fillPattern, patternLayout: patSettings?.layout, patternScale: patSettings?.scale, patternSpacing: patSettings?.spacing, customPatternSvg: patSettings?.customSvg });
+    return new Path({ type: 'rawPath', points: [...points], color: strokeColor, strokeWidth, fillColor, fillPattern, patternLayout: patSettings?.layout, patternScale: patSettings?.scale, patternSpacing: patSettings?.spacing, customPatternSvg: patSettings?.customSvg });
   }
 };
 
@@ -62,23 +62,23 @@ const pointsToBezierSVG = (points, isClosed) => {
   return d;
 };
 
-export const processBezierSmoother = (points, strokeColor, amount, forceClosed, fillColor, fillPattern, patSettings) => {
+export const processBezierSmoother = (points, strokeColor, strokeWidth, amount, forceClosed, fillColor, fillPattern, patSettings) => {
   let pts = [...points];
   const isClosed = forceClosed && pts.length > 3;
   if (isClosed) pts.push({ x: pts[0].x, y: pts[0].y });
   const tolerance = amount === 0 ? 0.5 : (amount / 100) * 20;
   const simplifiedPoints = simplifyPath(pts, tolerance);
   const svgPathD = pointsToBezierSVG(simplifiedPoints, isClosed);
-  return new Path({ type: 'bezierPath', d: svgPathD, color: strokeColor, fillColor, fillPattern, patternLayout: patSettings?.layout, patternScale: patSettings?.scale, patternSpacing: patSettings?.spacing, customPatternSvg: patSettings?.customSvg });
+  return new Path({ type: 'bezierPath', d: svgPathD, color: strokeColor, strokeWidth, fillColor, fillPattern, patternLayout: patSettings?.layout, patternScale: patSettings?.scale, patternSpacing: patSettings?.spacing, customPatternSvg: patSettings?.customSvg });
 };
 
-export const processDrawer = (points, strokeColor, amount, forceClosed, fillColor, fillPattern, patSettings) => {
+export const processDrawer = (points, strokeColor, strokeWidth, amount, forceClosed, fillColor, fillPattern, patSettings) => {
   let pts = [...points];
   const isClosed = forceClosed && pts.length > 3;
   if (isClosed) pts.push({ x: pts[0].x, y: pts[0].y });
   const tolerance = amount === 0 ? 0.5 : (amount / 100) * 20;
   const simplifiedPoints = simplifyPath(pts, tolerance);
-  return new Path({ type: 'rawPath', points: simplifiedPoints, color: strokeColor, fillColor, fillPattern, patternLayout: patSettings?.layout, patternScale: patSettings?.scale, patternSpacing: patSettings?.spacing, customPatternSvg: patSettings?.customSvg });
+  return new Path({ type: 'rawPath', points: simplifiedPoints, color: strokeColor, strokeWidth, fillColor, fillPattern, patternLayout: patSettings?.layout, patternScale: patSettings?.scale, patternSpacing: patSettings?.spacing, customPatternSvg: patSettings?.customSvg });
 };
 
 export const pointInPolygon = (point, vs) => {

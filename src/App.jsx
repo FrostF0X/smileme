@@ -82,6 +82,7 @@ export default function App() {
   const [smoothAmount, setSmoothAmount] = useState(50);
   const [forceCloseShape, setForceCloseShape] = useState(true);
   const [globalColor, setGlobalColor] = useState('#000000');
+  const [globalStrokeWidth, setGlobalStrokeWidth] = useState(4);
   const [globalFillColor, setGlobalFillColor] = useState(null);
   const [globalFillPattern, setGlobalFillPattern] = useState(null);
   const [globalPatternSettings, setGlobalPatternSettings] = useState({ layout: 'grid', scale: 1, spacing: 0 });
@@ -152,7 +153,7 @@ export default function App() {
   };
 
   const { isDrawing, currentStroke, handlePointerDown, handlePointerMove, handlePointerUp } = useDrawing(
-    svgRef, activeTool, globalColor, globalFillColor, globalFillPattern, globalPatternSettings, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage, canvasTransform, setCanvasTransform, transformTarget, mainGroupRef, onLassoComplete, selectedShapeIndices, updateSelectedShape
+    svgRef, activeTool, globalColor, globalStrokeWidth, globalFillColor, globalFillPattern, globalPatternSettings, smoothAmount, forceCloseShape, commitShapes, shapes, bgImage, setBgImage, canvasTransform, setCanvasTransform, transformTarget, mainGroupRef, onLassoComplete, selectedShapeIndices, updateSelectedShape
   );
 
   useEffect(() => { if (activeTool !== 'select') setSelectedShapeIndices([]); }, [activeTool]);
@@ -312,7 +313,7 @@ export default function App() {
       {/* TopAppBar - Integrates TopToolbar features */}
       <ToolbarTop
         activeTool={activeTool} globalColor={globalColor} setGlobalColor={setGlobalColor} forceCloseShape={forceCloseShape} setForceCloseShape={setForceCloseShape}
-        smoothAmount={smoothAmount} setSmoothAmount={setSmoothAmount} activeShape={selectedShapeIndices.length > 0 ? shapes[selectedShapeIndices[0]] : null}
+        smoothAmount={smoothAmount} setSmoothAmount={setSmoothAmount} globalStrokeWidth={globalStrokeWidth} setGlobalStrokeWidth={setGlobalStrokeWidth} activeShape={selectedShapeIndices.length > 0 ? shapes[selectedShapeIndices[0]] : null}
         updateSelectedShape={updateSelectedShape} setShowRightPanel={setShowRightPanel}
         undo={undo} redo={redo} canUndo={historyObj.canUndo()} canRedo={historyObj.canRedo()}
         handleClear={() => { if (window.confirm("Wyczyścić wektory?")) commitShapes([]); }}
@@ -335,7 +336,7 @@ export default function App() {
         <div className="flex-1 ml-[56px] mr-[280px] h-full relative overflow-auto bg-[#050505] flex items-center justify-center p-8 custom-scrollbar">
           <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: "radial-gradient(circle at 2px 2px, #333 1px, transparent 0)", backgroundSize: "24px 24px" }}></div>
           <Canvas
-            svgRef={svgRef} mainGroupRef={mainGroupRef} canvasTransform={canvasTransform} shapes={shapes} currentStroke={currentStroke} bgImage={bgImage} isDrawing={isDrawing} activeTool={activeTool} globalColor={globalColor}
+            svgRef={svgRef} mainGroupRef={mainGroupRef} canvasTransform={canvasTransform} shapes={shapes} currentStroke={currentStroke} bgImage={bgImage} isDrawing={isDrawing} activeTool={activeTool} globalColor={globalColor} globalStrokeWidth={globalStrokeWidth}
             handlePointerDown={handleCanvasPointerDown} handlePointerMove={handleCanvasPointerMove} handlePointerUp={handleCanvasPointerUp}
             selectedShapeIndices={selectedShapeIndices} handleShapeInteraction={handleShapeInteraction}
           />

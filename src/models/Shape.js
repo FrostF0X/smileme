@@ -2,6 +2,7 @@ export default class Shape {
   constructor(props) {
     this.type = 'shape';
     this.color = props.color || '#000000';
+    this.strokeWidth = props.strokeWidth !== undefined ? props.strokeWidth : 4;
     this.fillColor = props.fillColor !== undefined ? props.fillColor : null;
     this.fillPattern = props.fillPattern || null;
     this.patternScale = props.patternScale || 1;
