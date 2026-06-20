@@ -96,16 +96,6 @@ export default function ColorPickerPopup({
           </h4>
 
           <div className="grid grid-cols-3 gap-2 mb-4">
-            <button onClick={() => handlePatternSelect('dots')} className={`aspect-square rounded border-2 flex items-center justify-center ${currentPattern === 'dots' ? 'border-amber-400' : 'border-slate-200 hover:border-slate-300'}`}>
-              <div className="w-2 h-2 rounded-full bg-slate-600 shadow-[4px_4px_0_0_#475569,-4px_-4px_0_0_#475569,-4px_4px_0_0_#475569,4px_-4px_0_0_#475569]"></div>
-            </button>
-            <button onClick={() => handlePatternSelect('grid')} className={`aspect-square rounded border-2 flex items-center justify-center ${currentPattern === 'grid' ? 'border-amber-400' : 'border-slate-200 hover:border-slate-300'}`}>
-              <div className="w-4 h-4 border border-slate-600 grid grid-cols-2 grid-rows-2"><div className="border-r border-b border-slate-600"></div><div className="border-b border-slate-600"></div><div className="border-r border-slate-600"></div><div></div></div>
-            </button>
-            <button onClick={() => handlePatternSelect('lines')} className={`aspect-square rounded border-2 flex items-center justify-center ${currentPattern === 'lines' ? 'border-amber-400' : 'border-slate-200 hover:border-slate-300'}`}>
-              <div className="flex flex-col gap-1 w-4"><div className="h-0.5 bg-slate-600"></div><div className="h-0.5 bg-slate-600"></div><div className="h-0.5 bg-slate-600"></div></div>
-            </button>
-
             {(customPatterns || []).map((pat, i) => (
               <button key={`custom-${i}`} onClick={() => handlePatternSelect('custom', pat)} className={`aspect-square rounded border-2 relative overflow-hidden ${currentPattern === 'custom' && currentCustomSvg === pat ? 'border-amber-400' : 'border-slate-200 hover:border-slate-300'}`}>
                 <img src={pat} alt="Wzór" className="w-full h-full object-cover" />

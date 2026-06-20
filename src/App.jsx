@@ -8,12 +8,13 @@ import GeminiApp from './components/GeminiApp';
 import ColorPickerPopup from './components/ColorPickerPopup';
 import useDrawing from './hooks/useDrawing';
 import { exportCleanSVG } from './utils/svgExport';
+import { exportPatternToSVG } from './utils/patternExport';
 import { Transaction, executeTool } from './mcp/index';
 import { handlePatternUploadEvent, handleImageChangeEvent, handleFileChangeEvent } from './utils/fileHandlers';
 import { traceImageMultipleLayers } from './utils/traceUtils';
 import { pointInPolygon, getShapePoints } from './utils/shapeProcessor';
 
-function Workspace({ tabId, isPattern, openNewPatternTab }) {
+function Workspace({ tabId, isPattern, openNewPatternTab, customPatterns, setCustomPatterns, tabs, activeTabId, setActiveTabId, closeTab }) {
   const svgRef = useRef(null);
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -95,19 +96,6 @@ function Workspace({ tabId, isPattern, openNewPatternTab }) {
   const [transformTarget, setTransformTarget] = useState('canvas');
   const [showGeminiApp, setShowGeminiApp] = useState(false);
   const [rightPanelTab, setRightPanelTab] = useState('options');
-    const [customPatterns, setCustomPatterns] = useState(() => {
-    try {
-      const saved = localStorage.getItem('custom_patterns_v1');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-    return [];
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('custom_patterns_v1', JSON.stringify(customPatterns));
-    } catch (e) {}
-  }, [customPatterns]);
 
   const handleTrace = async () => {
     if (!bgImage.url || isTracing) return;
@@ -136,6 +124,13 @@ function Workspace({ tabId, isPattern, openNewPatternTab }) {
     });
     setSelectedShapeIndices(selected);
     if (selected.length > 0) setShowRightPanel(true);
+  };
+
+  const handleSavePattern = () => {
+    if (isPattern) {
+      const dataUrl = exportPatternToSVG(shapes);
+      setCustomPatterns(prev => [...prev, dataUrl]);
+    }
   };
 
   const updateSelectedShape = (updates, replace = false) => {
@@ -302,6 +297,8 @@ function Workspace({ tabId, isPattern, openNewPatternTab }) {
         handleRunComputerTool={handleRunComputerTool}
         fileInputRef={fileInputRef}
         exportSVG={() => exportCleanSVG(shapes, svgRef)} shapesCount={shapes.length}
+        isPattern={isPattern}
+        handleSavePattern={handleSavePattern}
       />
 
       <main className="absolute inset-0 pt-[56px] pb-[32px] flex overflow-hidden">
@@ -315,13 +312,48 @@ function Workspace({ tabId, isPattern, openNewPatternTab }) {
         />
 
         {/* Central Canvas Area */}
-        <div className="flex-1 ml-[56px] mr-[280px] h-full relative overflow-auto bg-[#050505] flex items-center justify-center p-8 custom-scrollbar">
-          <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: "radial-gradient(circle at 2px 2px, #333 1px, transparent 0)", backgroundSize: "24px 24px" }}></div>
+        <div className="flex-1 ml-[56px] mr-[280px] h-full relative overflow-auto bg-[#050505] flex flex-col items-center justify-center custom-scrollbar">
+          {/* Tabs Header inside the main view to be to the right of left toolbar and under top toolbar */}
+          <div className="w-full h-10 bg-[#111]/80 backdrop-blur-md border-b border-[#FC0FC0]/20 flex items-center px-2 overflow-x-auto shrink-0 z-30">
+            {tabs.map((tab) => (
+              <div
+                key={tab.id}
+                onClick={() => setActiveTabId(tab.id)}
+                className={`
+                  flex items-center h-8 px-4 mr-1 rounded-t-md cursor-pointer transition-colors border border-b-0
+                  ${activeTabId === tab.id
+                    ? 'bg-[#222] border-[#FC0FC0]/50 text-white'
+                    : 'bg-[#111] border-transparent text-on-surface-variant hover:bg-[#1a1a1a] hover:text-white'}
+                `}
+              >
+                <span className="text-sm font-medium whitespace-nowrap">{tab.title}</span>
+                {tab.id !== 'main' && (
+                  <button
+                    onClick={(e) => closeTab(e, tab.id)}
+                    className="ml-2 w-5 h-5 rounded-full flex items-center justify-center hover:bg-white/10 text-slate-400 hover:text-red-400"
+                  >
+                    &times;
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              onClick={openNewPatternTab}
+              className="h-8 px-3 ml-2 flex items-center justify-center text-on-surface-variant hover:text-[#00FFFF] hover:bg-white/5 rounded transition-colors"
+              title="New Pattern Tab"
+            >
+              +
+            </button>
+          </div>
+
+          <div className="flex-1 w-full relative overflow-auto flex items-center justify-center p-8">
+            <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: "radial-gradient(circle at 2px 2px, #333 1px, transparent 0)", backgroundSize: "24px 24px" }}></div>
           <Canvas
             svgRef={svgRef} mainGroupRef={mainGroupRef} canvasTransform={canvasTransform} shapes={shapes} currentStroke={currentStroke} bgImage={bgImage} isDrawing={isDrawing} activeTool={activeTool} globalColor={globalColor}
             handlePointerDown={handleCanvasPointerDown} handlePointerMove={handleCanvasPointerMove} handlePointerUp={handleCanvasPointerUp}
             selectedShapeIndices={selectedShapeIndices} handleShapeInteraction={handleShapeInteraction}
           />
+          </div>
         </div>
 
         {/* Right SideNavBar (Inspector) */}
@@ -355,6 +387,20 @@ function Workspace({ tabId, isPattern, openNewPatternTab }) {
 }
 
 export default function App() {
+  const [customPatterns, setCustomPatterns] = useState(() => {
+    try {
+      const saved = localStorage.getItem('custom_patterns_v1');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return [];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('custom_patterns_v1', JSON.stringify(customPatterns));
+    } catch (e) {}
+  }, [customPatterns]);
+
   const [tabs, setTabs] = useState([
     { id: 'main', title: 'Main Drawing', type: 'main' }
   ]);
@@ -380,39 +426,6 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen w-screen bg-[#050505] overflow-hidden">
-      {/* Tabs Header */}
-      <div className="h-10 bg-[#111] border-b border-[#FC0FC0]/20 flex items-center px-2 overflow-x-auto shrink-0 z-50">
-        {tabs.map((tab) => (
-          <div
-            key={tab.id}
-            onClick={() => setActiveTabId(tab.id)}
-            className={`
-              flex items-center h-8 px-4 mr-1 rounded-t-md cursor-pointer transition-colors border border-b-0
-              ${activeTabId === tab.id
-                ? 'bg-[#222] border-[#FC0FC0]/50 text-white'
-                : 'bg-[#111] border-transparent text-on-surface-variant hover:bg-[#1a1a1a] hover:text-white'}
-            `}
-          >
-            <span className="text-sm font-medium whitespace-nowrap">{tab.title}</span>
-            {tab.id !== 'main' && (
-              <button
-                onClick={(e) => closeTab(e, tab.id)}
-                className="ml-2 w-5 h-5 rounded-full flex items-center justify-center hover:bg-white/10 text-slate-400 hover:text-red-400"
-              >
-                &times;
-              </button>
-            )}
-          </div>
-        ))}
-        <button
-          onClick={openNewPatternTab}
-          className="h-8 px-3 ml-2 flex items-center justify-center text-on-surface-variant hover:text-[#00FFFF] hover:bg-white/5 rounded transition-colors"
-          title="New Pattern Tab"
-        >
-          +
-        </button>
-      </div>
-
       {/* Tab Content Area */}
       <div className="flex-1 relative">
         {tabs.map(tab => (
@@ -424,6 +437,12 @@ export default function App() {
               tabId={tab.id}
               isPattern={tab.type === 'pattern'}
               openNewPatternTab={openNewPatternTab}
+              customPatterns={customPatterns}
+              setCustomPatterns={setCustomPatterns}
+              tabs={tabs}
+              activeTabId={activeTabId}
+              setActiveTabId={setActiveTabId}
+              closeTab={closeTab}
             />
           </div>
         ))}
