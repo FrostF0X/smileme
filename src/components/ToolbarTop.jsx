@@ -13,15 +13,15 @@ const SmoothControls = ({ forceCloseShape, setForceCloseShape, smoothAmount, set
 
 export default function ToolbarTop({ activeTool, forceCloseShape, setForceCloseShape, smoothAmount, setSmoothAmount, activeShape, undo, redo, canUndo, canRedo, handleClear, handleRunComputerTool, fileInputRef, exportSVG, shapesCount }) {
   return (
-    <header className="fixed top-0 w-full z-50 flex items-center justify-between px-panel-padding h-[56px] bg-[#111]/80 backdrop-blur-xl border-b border-[#FC0FC0]/20 shadow-sm glass-edge-top">
-      <div className="flex items-center gap-6">
+    <header className="fixed top-0 w-full z-50 flex items-center justify-between pr-panel-padding h-[56px] bg-[#111]/80 backdrop-blur-xl border-b border-[#FC0FC0]/20 shadow-sm glass-edge-top">
+      <div className="flex items-center">
         {/* Brand */}
-        <div className="w-10 h-10 flex items-center justify-center bg-[#FC0FC0]/10 border border-[#FC0FC0]/30 rounded-md font-display-lg text-[20px] font-bold text-[#FC0FC0] tracking-tighter leading-none">
+        <div className="w-[56px] h-[56px] flex items-center justify-center bg-[#FC0FC0]/10 border-r border-[#FC0FC0]/30 font-display-lg text-[20px] font-bold text-[#FC0FC0] tracking-tighter leading-none shrink-0">
             Ae
         </div>
 
         {/* Navigation Links / Dynamic Context */}
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-1 ml-6">
           {(activeTool === 'smoother' || activeTool === 'snapper' || activeTool === 'drawer') && (
             <div className="flex items-center ml-4">
               {(activeTool === 'smoother' || activeTool === 'drawer') && <SmoothControls forceCloseShape={forceCloseShape} setForceCloseShape={setForceCloseShape} smoothAmount={smoothAmount} setSmoothAmount={setSmoothAmount} />}
@@ -40,10 +40,6 @@ export default function ToolbarTop({ activeTool, forceCloseShape, setForceCloseS
         <button onClick={redo} disabled={!canRedo} className="p-2 rounded-full text-on-surface-variant hover:bg-[#00FFFF]/10 hover:text-[#00FFFF] transition-colors cursor-pointer active:scale-95 disabled:opacity-30">
             <span className="material-symbols-outlined text-[20px]">redo</span>
         </button>
-        <button onClick={handleRunComputerTool} title="Auto Kształt (Demo MCP)" className="px-3 py-1.5 rounded-md text-[#FFD700] hover:bg-[#FFD700]/10 font-medium text-xs border border-[#FFD700]/30 transition-colors cursor-pointer active:scale-95">Auto Kształt</button>
-        <div className="w-8 h-8 rounded-full bg-surface-container-high border border-[#FC0FC0]/50 ml-2 overflow-hidden cursor-pointer shadow-[0_0_10px_rgba(252,15,192,0.3)]">
-            <img className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpwP7iGzm4GQkPWXIE0_MLCblcfHtTYbsBvAHMUkUgriIrZN2QmFE4AH50qOrNCTY56dN_WhQ9pTQdZHLQ-zLoGV6aryR3bfnvYwL-joyUH1pOu-r6znjLj4_vGU-zLPHZFN3YT9P7khhjgYXy7qcBDOni3QuBrTReVfB80o_p8aGrBeeAKo0BizLXf2iRmVmBmWFE6bmQ4kT7WvUbA-BRmj8K1pjNATLW3ifygc3QfK9_OoHr4X5z" alt="Avatar"/>
-        </div>
         <div className="relative group ml-2 flex items-center">
           <button className="p-2 rounded-full text-on-surface-variant hover:bg-[#FFD700]/10 hover:text-[#FFD700] transition-colors cursor-pointer active:scale-95">
               <span className="material-symbols-outlined text-[20px]">settings</span>
