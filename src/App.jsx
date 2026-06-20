@@ -6,7 +6,6 @@ import Canvas from './components/Canvas';
 import RightPanel from './components/RightPanel';
 import GeminiApp from './components/GeminiApp';
 import ColorPickerPopup from './components/ColorPickerPopup';
-import PatternEditor from './components/PatternEditor';
 import useDrawing from './hooks/useDrawing';
 import { exportCleanSVG } from './utils/svgExport';
 import { Transaction, executeTool } from './mcp/index';
@@ -14,7 +13,7 @@ import { handlePatternUploadEvent, handleImageChangeEvent, handleFileChangeEvent
 import { traceImageMultipleLayers } from './utils/traceUtils';
 import { pointInPolygon, getShapePoints } from './utils/shapeProcessor';
 
-export default function App() {
+function Workspace({ tabId, isPattern, openNewPatternTab }) {
   const svgRef = useRef(null);
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -23,7 +22,7 @@ export default function App() {
 
   const [historyObj, setHistoryObj] = useState(() => {
     try {
-      const saved = localStorage.getItem('drawing_history_pro_v3');
+      const saved = localStorage.getItem(`drawing_history_pro_v3_${tabId}`);
       if (saved) {
         const parsed = JSON.parse(saved);
         return new DrawingHistory(parsed.history, parsed.step);
@@ -36,7 +35,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('drawing_history_pro_v3', JSON.stringify({ history: historyObj.history, step: historyObj.step }));
+      localStorage.setItem(`drawing_history_pro_v3_${tabId}`, JSON.stringify({ history: historyObj.history, step: historyObj.step }));
     } catch (e) { }
   }, [historyObj]);
 
@@ -96,8 +95,7 @@ export default function App() {
   const [transformTarget, setTransformTarget] = useState('canvas');
   const [showGeminiApp, setShowGeminiApp] = useState(false);
   const [rightPanelTab, setRightPanelTab] = useState('options');
-  const [isPatternEditor, setIsPatternEditor] = useState(false);
-  const [customPatterns, setCustomPatterns] = useState(() => {
+    const [customPatterns, setCustomPatterns] = useState(() => {
     try {
       const saved = localStorage.getItem('custom_patterns_v1');
       if (saved) return JSON.parse(saved);
@@ -272,21 +270,6 @@ export default function App() {
     }
   };
 
-  if (isPatternEditor) {
-    return (
-      <PatternEditor
-        onClose={() => setIsPatternEditor(false)}
-        onSave={(dataUrl) => {
-          setCustomPatterns(prev => [...prev, dataUrl]);
-          if (selectedShapeIndices.length > 0) {
-            updateSelectedShape({ fillPattern: 'custom', customPatternSvg: dataUrl });
-          }
-          setIsPatternEditor(false);
-        }}
-      />
-    );
-  }
-
   return (
     <>
       <input type="file" accept=".svg" ref={fileInputRef} onChange={(e) => handleFileChangeEvent(e, commitShapes, shapes)} className="hidden" />
@@ -304,7 +287,7 @@ export default function App() {
           activeShape={selectedShapeIndices.length > 0 ? shapes[selectedShapeIndices[0]] : null}
           updateSelectedShape={updateSelectedShape}
           customPatterns={customPatterns}
-          setIsPatternEditor={setIsPatternEditor}
+          openNewPatternTab={openNewPatternTab}
           setShowColorPopup={setShowColorPopup}
         />
       )}
@@ -347,12 +330,12 @@ export default function App() {
           activeTool={activeTool} activeShape={selectedShapeIndices.length > 0 ? shapes[selectedShapeIndices[0]] : null}
           updateSelectedShape={updateSelectedShape} patternInputRef={patternInputRef} svgRef={svgRef}
           traceConfig={traceConfig} setTraceConfig={setTraceConfig} handleTrace={handleTrace} isTracing={isTracing}
-          transformTarget={transformTarget} setTransformTarget={setTransformTarget} customPatterns={customPatterns} setIsPatternEditor={setIsPatternEditor}
+          transformTarget={transformTarget} setTransformTarget={setTransformTarget} customPatterns={customPatterns} openNewPatternTab={openNewPatternTab}
         />
       </main>
 
       {/* Footer */}
-      <footer className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between px-4 bg-[#111]/90 backdrop-blur-md border-t border-[#00FFFF]/20 h-8 shadow-[0_-2px_10px_rgba(0,255,255,0.05)]">
+      <footer className="absolute bottom-0 left-0 right-0 z-50 flex items-center justify-between px-4 bg-[#111]/90 backdrop-blur-md border-t border-[#00FFFF]/20 h-8 shadow-[0_-2px_10px_rgba(0,255,255,0.05)]">
         <div className="flex items-center gap-4 text-on-surface-variant font-label-sm text-label-sm cursor-default">
           <span className="hover:text-[#FC0FC0] transition-colors">Zoom {Math.round((canvasTransform.scale || 1) * 100)}%</span>
           <span className="w-px h-3 bg-white/10"></span>
@@ -368,5 +351,83 @@ export default function App() {
         </div>
       </footer>
     </>
+  );
+}
+
+export default function App() {
+  const [tabs, setTabs] = useState([
+    { id: 'main', title: 'Main Drawing', type: 'main' }
+  ]);
+  const [activeTabId, setActiveTabId] = useState('main');
+  const [patternCounter, setPatternCounter] = useState(1);
+
+  const openNewPatternTab = () => {
+    const newTabId = `pattern_${patternCounter}`;
+    setTabs([...tabs, { id: newTabId, title: `Pattern ${patternCounter}`, type: 'pattern' }]);
+    setActiveTabId(newTabId);
+    setPatternCounter(c => c + 1);
+  };
+
+  const closeTab = (e, tabId) => {
+    e.stopPropagation();
+    if (tabId === 'main') return; // Cannot close main tab
+    const newTabs = tabs.filter(t => t.id !== tabId);
+    setTabs(newTabs);
+    if (activeTabId === tabId) {
+      setActiveTabId('main');
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-screen w-screen bg-[#050505] overflow-hidden">
+      {/* Tabs Header */}
+      <div className="h-10 bg-[#111] border-b border-[#FC0FC0]/20 flex items-center px-2 overflow-x-auto shrink-0 z-50">
+        {tabs.map((tab) => (
+          <div
+            key={tab.id}
+            onClick={() => setActiveTabId(tab.id)}
+            className={`
+              flex items-center h-8 px-4 mr-1 rounded-t-md cursor-pointer transition-colors border border-b-0
+              ${activeTabId === tab.id
+                ? 'bg-[#222] border-[#FC0FC0]/50 text-white'
+                : 'bg-[#111] border-transparent text-on-surface-variant hover:bg-[#1a1a1a] hover:text-white'}
+            `}
+          >
+            <span className="text-sm font-medium whitespace-nowrap">{tab.title}</span>
+            {tab.id !== 'main' && (
+              <button
+                onClick={(e) => closeTab(e, tab.id)}
+                className="ml-2 w-5 h-5 rounded-full flex items-center justify-center hover:bg-white/10 text-slate-400 hover:text-red-400"
+              >
+                &times;
+              </button>
+            )}
+          </div>
+        ))}
+        <button
+          onClick={openNewPatternTab}
+          className="h-8 px-3 ml-2 flex items-center justify-center text-on-surface-variant hover:text-[#00FFFF] hover:bg-white/5 rounded transition-colors"
+          title="New Pattern Tab"
+        >
+          +
+        </button>
+      </div>
+
+      {/* Tab Content Area */}
+      <div className="flex-1 relative">
+        {tabs.map(tab => (
+          <div
+            key={tab.id}
+            className={`absolute inset-0 ${activeTabId === tab.id ? 'block' : 'hidden'}`}
+          >
+            <Workspace
+              tabId={tab.id}
+              isPattern={tab.type === 'pattern'}
+              openNewPatternTab={openNewPatternTab}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

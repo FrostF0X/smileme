@@ -3,7 +3,7 @@ import React from 'react';
 export default function RightPanel({
   showRightPanel, setShowRightPanel, rightPanelTab, setRightPanelTab, bgImage, setBgImage,
   activeTool, activeShape, updateSelectedShape, patternInputRef, svgRef,
-  traceConfig, setTraceConfig, handleTrace, isTracing, transformTarget, setTransformTarget, customPatterns, setIsPatternEditor
+  traceConfig, setTraceConfig, handleTrace, isTracing, transformTarget, setTransformTarget, customPatterns, openNewPatternTab
 }) {
   if (!showRightPanel) return null;
 

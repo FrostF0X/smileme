@@ -10,7 +10,7 @@ export default function ColorPickerPopup({
   globalFillPattern, setGlobalFillPattern,
   globalPatternSettings, setGlobalPatternSettings,
   activeShape, updateSelectedShape,
-  customPatterns, setIsPatternEditor, setShowColorPopup
+  customPatterns, openNewPatternTab, setShowColorPopup
 }) {
   const isFill = activeColorPicker === 'fill';
   const currentColor = isFill
@@ -113,7 +113,7 @@ export default function ColorPickerPopup({
             ))}
           </div>
 
-          <button onClick={() => { setIsPatternEditor(true); setShowColorPopup(false); }} className="w-full py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-semibold rounded border border-amber-200 transition-colors mb-4">Nowy Wzór...</button>
+          <button onClick={() => { openNewPatternTab(); setShowColorPopup(false); }} className="w-full py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-semibold rounded border border-amber-200 transition-colors mb-4">Nowy Wzór...</button>
 
           {currentPattern && (
             <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
