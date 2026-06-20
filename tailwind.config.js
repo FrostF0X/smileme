@@ -73,20 +73,29 @@ export default {
               "toolbar-width": "56px"
       },
       "fontFamily": {
+              "sans": [
+                      "Inter",
+                      "sans-serif"
+              ],
               "headline-lg": [
-                      "Syne"
+                      "Inter",
+                      "sans-serif"
               ],
               "label-sm": [
-                      "Geist"
+                      "Inter",
+                      "sans-serif"
               ],
               "body-md": [
-                      "Hanken Grotesk"
+                      "Inter",
+                      "sans-serif"
               ],
               "headline-lg-mobile": [
-                      "Syne"
+                      "Inter",
+                      "sans-serif"
               ],
               "display-lg": [
-                      "Syne"
+                      "Inter",
+                      "sans-serif"
               ]
       },
       "fontSize": {
