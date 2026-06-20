@@ -96,11 +96,25 @@ export default function ColorPickerPopup({
           </h4>
 
           <div className="grid grid-cols-3 gap-2 mb-4">
-            {(customPatterns || []).map((pat, i) => (
-              <button key={`custom-${i}`} onClick={() => handlePatternSelect('custom', pat)} className={`aspect-square rounded border-2 relative overflow-hidden ${currentPattern === 'custom' && currentCustomSvg === pat ? 'border-amber-400' : 'border-slate-200 hover:border-slate-300'}`}>
-                <img src={pat} alt="Wzór" className="w-full h-full object-cover" />
-              </button>
-            ))}
+            {(customPatterns || []).map((pat, i) => {
+              const svgData = typeof pat === 'object' ? pat.svg : pat;
+              return (
+                <div key={`custom-${i}`} className="relative aspect-square rounded border-2 group overflow-hidden border-slate-200 hover:border-slate-300" style={{ borderColor: currentPattern === 'custom' && currentCustomSvg === svgData ? '#fbbf24' : '' }}>
+                  <button onClick={() => handlePatternSelect('custom', svgData)} className="w-full h-full relative">
+                    <img src={svgData} alt="Wzór" className="w-full h-full object-cover" />
+                  </button>
+                  {typeof pat === 'object' && pat.shapes && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); openNewPatternTab(pat.shapes); setShowColorPopup(false); }}
+                      className="absolute top-1 right-1 w-6 h-6 bg-white/90 backdrop-blur-sm rounded shadow flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-amber-100 text-slate-600 hover:text-amber-700"
+                      title="Edytuj Wzór"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">edit</span>
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <button onClick={() => { openNewPatternTab(); setShowColorPopup(false); }} className="w-full py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-semibold rounded border border-amber-200 transition-colors mb-4">Nowy Wzór...</button>

@@ -14,7 +14,7 @@ import { handlePatternUploadEvent, handleImageChangeEvent, handleFileChangeEvent
 import { traceImageMultipleLayers } from './utils/traceUtils';
 import { pointInPolygon, getShapePoints } from './utils/shapeProcessor';
 
-function Workspace({ tabId, isPattern, openNewPatternTab, customPatterns, setCustomPatterns, saveAndClosePatternTab }) {
+function Workspace({ tabId, isPattern, openNewPatternTab, customPatterns, setCustomPatterns, tabs, activeTabId, setActiveTabId, closeTab, initialShapes }) {
   const svgRef = useRef(null);
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -29,7 +29,7 @@ function Workspace({ tabId, isPattern, openNewPatternTab, customPatterns, setCus
         return new DrawingHistory(parsed.history, parsed.step);
       }
     } catch (e) { }
-    return new DrawingHistory();
+    return new DrawingHistory(Array.isArray(initialShapes) ? [initialShapes] : [[]]);
   });
 
   const shapes = historyObj.getCurrentShapes();
@@ -97,7 +97,6 @@ function Workspace({ tabId, isPattern, openNewPatternTab, customPatterns, setCus
   const [showGeminiApp, setShowGeminiApp] = useState(false);
   const [rightPanelTab, setRightPanelTab] = useState('options');
 
-
   const handleTrace = async () => {
     if (!bgImage.url || isTracing) return;
     setIsTracing(true);
@@ -125,6 +124,17 @@ function Workspace({ tabId, isPattern, openNewPatternTab, customPatterns, setCus
     });
     setSelectedShapeIndices(selected);
     if (selected.length > 0) setShowRightPanel(true);
+  };
+
+  const handleSavePattern = () => {
+    if (isPattern) {
+      const dataUrl = exportPatternToSVG(shapes);
+      // Ensure we store the shapes alongside the SVG data
+      setCustomPatterns(prev => {
+        // If it was just strings before, map it implicitly, but here we append the object
+        return [...prev, { svg: dataUrl, shapes: shapes }];
+      });
+    }
   };
 
   const updateSelectedShape = (updates, replace = false) => {
@@ -292,10 +302,7 @@ function Workspace({ tabId, isPattern, openNewPatternTab, customPatterns, setCus
         fileInputRef={fileInputRef}
         exportSVG={() => exportCleanSVG(shapes, svgRef)} shapesCount={shapes.length}
         isPattern={isPattern}
-        onSavePattern={() => {
-          const patternSvgUrl = exportPatternToSVG(shapes);
-          saveAndClosePatternTab(patternSvgUrl);
-        }}
+        handleSavePattern={handleSavePattern}
       />
 
       <main className="absolute inset-0 pt-[56px] pb-[32px] flex overflow-hidden">
@@ -309,13 +316,48 @@ function Workspace({ tabId, isPattern, openNewPatternTab, customPatterns, setCus
         />
 
         {/* Central Canvas Area */}
-        <div className="flex-1 ml-[56px] mr-[280px] mt-[40px] h-[calc(100%-40px)] relative overflow-auto bg-[#050505] flex items-center justify-center p-8 custom-scrollbar">
-          <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: "radial-gradient(circle at 2px 2px, #333 1px, transparent 0)", backgroundSize: "24px 24px" }}></div>
+        <div className="flex-1 ml-[56px] mr-[280px] h-full relative overflow-auto bg-[#050505] flex flex-col items-center justify-center custom-scrollbar">
+          {/* Tabs Header inside the main view to be to the right of left toolbar and under top toolbar */}
+          <div className="w-full h-10 bg-[#111]/80 backdrop-blur-md border-b border-[#FC0FC0]/20 flex items-center px-2 overflow-x-auto shrink-0 z-30">
+            {tabs.map((tab) => (
+              <div
+                key={tab.id}
+                onClick={() => setActiveTabId(tab.id)}
+                className={`
+                  flex items-center h-8 px-4 mr-1 rounded-t-md cursor-pointer transition-colors border border-b-0
+                  ${activeTabId === tab.id
+                    ? 'bg-[#222] border-[#FC0FC0]/50 text-white'
+                    : 'bg-[#111] border-transparent text-on-surface-variant hover:bg-[#1a1a1a] hover:text-white'}
+                `}
+              >
+                <span className="text-sm font-medium whitespace-nowrap">{tab.title}</span>
+                {tab.id !== 'main' && (
+                  <button
+                    onClick={(e) => closeTab(e, tab.id)}
+                    className="ml-2 w-5 h-5 rounded-full flex items-center justify-center hover:bg-white/10 text-slate-400 hover:text-red-400"
+                  >
+                    &times;
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              onClick={openNewPatternTab}
+              className="h-8 px-3 ml-2 flex items-center justify-center text-on-surface-variant hover:text-[#00FFFF] hover:bg-white/5 rounded transition-colors"
+              title="New Pattern Tab"
+            >
+              +
+            </button>
+          </div>
+
+          <div className="flex-1 w-full relative overflow-auto flex items-center justify-center p-8">
+            <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: "radial-gradient(circle at 2px 2px, #333 1px, transparent 0)", backgroundSize: "24px 24px" }}></div>
           <Canvas
             svgRef={svgRef} mainGroupRef={mainGroupRef} canvasTransform={canvasTransform} shapes={shapes} currentStroke={currentStroke} bgImage={bgImage} isDrawing={isDrawing} activeTool={activeTool} globalColor={globalColor}
             handlePointerDown={handleCanvasPointerDown} handlePointerMove={handleCanvasPointerMove} handlePointerUp={handleCanvasPointerUp}
             selectedShapeIndices={selectedShapeIndices} handleShapeInteraction={handleShapeInteraction}
           />
+          </div>
         </div>
 
         {/* Right SideNavBar (Inspector) */}
@@ -349,12 +391,6 @@ function Workspace({ tabId, isPattern, openNewPatternTab, customPatterns, setCus
 }
 
 export default function App() {
-  const [tabs, setTabs] = useState([
-    { id: 'main', title: 'Main Drawing', type: 'main' }
-  ]);
-  const [activeTabId, setActiveTabId] = useState('main');
-  const [patternCounter, setPatternCounter] = useState(1);
-
   const [customPatterns, setCustomPatterns] = useState(() => {
     try {
       const saved = localStorage.getItem('custom_patterns_v1');
@@ -369,19 +405,26 @@ export default function App() {
     } catch (e) {}
   }, [customPatterns]);
 
-  const saveAndClosePatternTab = (tabId, dataUrl) => {
-    setCustomPatterns(prev => [...prev, dataUrl]);
-    const newTabs = tabs.filter(t => t.id !== tabId);
-    setTabs(newTabs);
-    if (activeTabId === tabId) {
-      setActiveTabId('main');
-    }
-  };
+  const [tabs, setTabs] = useState([
+    { id: 'main', title: 'Main Drawing', type: 'main' }
+  ]);
+  const [activeTabId, setActiveTabId] = useState('main');
+  const [patternCounter, setPatternCounter] = useState(1);
 
-
-  const openNewPatternTab = () => {
+  const openNewPatternTab = (initialShapes = null) => {
     const newTabId = `pattern_${patternCounter}`;
     setTabs([...tabs, { id: newTabId, title: `Pattern ${patternCounter}`, type: 'pattern' }]);
+
+    // If we're editing an existing pattern, initialize its history
+    if (initialShapes && Array.isArray(initialShapes)) {
+      try {
+        localStorage.setItem(`drawing_history_pro_v3_${newTabId}`, JSON.stringify({
+          history: [initialShapes],
+          step: 0
+        }));
+      } catch (e) {}
+    }
+
     setActiveTabId(newTabId);
     setPatternCounter(c => c + 1);
   };
@@ -397,41 +440,8 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#050505] overflow-hidden relative">
-      {/* Tabs Header */}
-      <div className="absolute top-[56px] left-[56px] right-[280px] h-10 bg-[#111] border-b border-[#FC0FC0]/20 flex items-center px-2 overflow-x-auto z-40">
-        {tabs.map((tab) => (
-          <div
-            key={tab.id}
-            onClick={() => setActiveTabId(tab.id)}
-            className={`
-              flex items-center h-8 px-4 mr-1 rounded-t-md cursor-pointer transition-colors border border-b-0
-              ${activeTabId === tab.id
-                ? 'bg-[#222] border-[#FC0FC0]/50 text-white'
-                : 'bg-[#111] border-transparent text-on-surface-variant hover:bg-[#1a1a1a] hover:text-white'}
-            `}
-          >
-            <span className="text-sm font-medium whitespace-nowrap">{tab.title}</span>
-            {tab.id !== 'main' && (
-              <button
-                onClick={(e) => closeTab(e, tab.id)}
-                className="ml-2 w-5 h-5 rounded-full flex items-center justify-center hover:bg-white/10 text-slate-400 hover:text-red-400"
-              >
-                &times;
-              </button>
-            )}
-          </div>
-        ))}
-        <button
-          onClick={openNewPatternTab}
-          className="h-8 px-3 ml-2 flex items-center justify-center text-on-surface-variant hover:text-[#00FFFF] hover:bg-white/5 rounded transition-colors"
-          title="New Pattern Tab"
-        >
-          +
-        </button>
-      </div>
-
-      {/* Tab Content Area - Offset to not overlap tabs */}
+    <div className="flex flex-col h-screen w-screen bg-[#050505] overflow-hidden">
+      {/* Tab Content Area */}
       <div className="flex-1 relative">
         {tabs.map(tab => (
           <div
@@ -444,7 +454,11 @@ export default function App() {
               openNewPatternTab={openNewPatternTab}
               customPatterns={customPatterns}
               setCustomPatterns={setCustomPatterns}
-              saveAndClosePatternTab={(dataUrl) => saveAndClosePatternTab(tab.id, dataUrl)}
+              tabs={tabs}
+              activeTabId={activeTabId}
+              setActiveTabId={setActiveTabId}
+              closeTab={closeTab}
+              initialShapes={tab.initialShapes}
             />
           </div>
         ))}

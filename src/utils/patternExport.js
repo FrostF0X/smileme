@@ -9,5 +9,5 @@ export const exportPatternToSVG = (shapes) => {
     }
   });
   const svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">${shapesHtml}</svg>`;
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svgString)}`;
+  return `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgString)))}`;
 };
