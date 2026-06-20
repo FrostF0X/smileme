@@ -140,12 +140,15 @@ export default function App() {
     if (selected.length > 0) setShowRightPanel(true);
   };
 
-  const updateSelectedShape = (updates, replace = false) => {
-    if (selectedShapeIndices.length === 0) return;
+  const updateSelectedShape = (updates, replace = false, overrideIndices = null) => {
+    const indicesToUpdate = overrideIndices || selectedShapeIndices;
+    if (indicesToUpdate.length === 0) return;
     commitShapesFunctional((prev) => {
       const next = [...prev];
-      selectedShapeIndices.forEach(idx => {
-        next[idx] = { ...next[idx], ...updates };
+      indicesToUpdate.forEach(idx => {
+        if (next[idx]) {
+          next[idx] = { ...next[idx], ...updates };
+        }
       });
       return next;
     }, replace);
@@ -163,7 +166,6 @@ export default function App() {
     }
   }, [transformTarget, selectedShapeIndices, activeTool]);
 
-  const transformingRef = useRef(null);
 
   const getScreenCoordinates = (e) => {
     if (!svgRef.current) return { x: 0, y: 0 };
@@ -173,26 +175,11 @@ export default function App() {
 
   const handleShapeInteraction = (e, shape, index, actionType) => {
     if (activeTool === 'select' && e.type === 'pointerdown') {
-      e.stopPropagation();
       if (!selectedShapeIndices.includes(index)) {
         setSelectedShapeIndices([index]);
+        setTransformTarget('selection');
       }
       setShowRightPanel(true);
-
-      if (svgRef.current) svgRef.current.setPointerCapture(e.pointerId);
-
-      const pt = getScreenCoordinates(e);
-
-      transformingRef.current = {
-        active: true,
-        pointerId: e.pointerId,
-        index: index,
-        startX: pt.x,
-        startY: pt.y,
-        shapeStartX: shape.x || 0,
-        shapeStartY: shape.y || 0,
-        hasMoved: false
-      };
     }
   };
 
@@ -225,31 +212,6 @@ export default function App() {
   };
 
   const handleCanvasPointerMove = (e) => {
-    if (transformingRef.current && transformingRef.current.active && transformingRef.current.pointerId === e.pointerId) {
-      const pt = getScreenCoordinates(e);
-      const dx = pt.x - transformingRef.current.startX;
-      const dy = pt.y - transformingRef.current.startY;
-
-      const scale = canvasTransform.scale || 1;
-      const actualDx = dx / scale;
-      const actualDy = dy / scale;
-
-      const replaceHistory = transformingRef.current.hasMoved;
-
-      commitShapesFunctional((prev) => {
-        const next = [...prev];
-        next[transformingRef.current.index] = {
-          ...next[transformingRef.current.index],
-          x: transformingRef.current.shapeStartX + actualDx,
-          y: transformingRef.current.shapeStartY + actualDy
-        };
-        return next;
-      }, replaceHistory);
-
-      transformingRef.current.hasMoved = true;
-      return;
-    }
-
     if (activeTool === 'eraser') {
       handleEraserMove(e);
     } else {
@@ -258,12 +220,6 @@ export default function App() {
   };
 
   const handleCanvasPointerUp = (e) => {
-    if (transformingRef.current && transformingRef.current.active && transformingRef.current.pointerId === e.pointerId) {
-      transformingRef.current = null;
-      if (svgRef.current) svgRef.current.releasePointerCapture(e.pointerId);
-      return;
-    }
-
     if (activeTool === 'eraser') {
       erasingGesture.current.active = false;
       if (svgRef.current) svgRef.current.releasePointerCapture(e.pointerId);
