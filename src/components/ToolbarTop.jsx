@@ -11,7 +11,7 @@ const SmoothControls = ({ forceCloseShape, setForceCloseShape, smoothAmount, set
   </div>
 );
 
-export default function ToolbarTop({ activeTool, forceCloseShape, setForceCloseShape, smoothAmount, setSmoothAmount, activeShape, undo, redo, canUndo, canRedo, handleClear, handleRunComputerTool, fileInputRef, exportSVG, shapesCount, isPattern, handleSavePattern }) {
+export default function ToolbarTop({ activeTool, forceCloseShape, setForceCloseShape, smoothAmount, setSmoothAmount, activeShape, undo, redo, canUndo, canRedo, handleClear, handleRunComputerTool, fileInputRef, exportSVG, shapesCount, isPattern, onSavePattern }) {
   return (
     <header className="absolute top-0 w-full z-50 flex items-center justify-between px-panel-padding h-[56px] bg-[#111]/80 backdrop-blur-xl border-b border-[#FC0FC0]/20 shadow-sm glass-edge-top">
       <div className="flex items-center gap-6">
@@ -25,7 +25,6 @@ export default function ToolbarTop({ activeTool, forceCloseShape, setForceCloseS
           <div className="px-3 py-1.5 rounded-md text-on-surface-variant font-body-md text-body-md hover:bg-surface-variant/50 transition-colors cursor-pointer active:scale-95" onClick={() => fileInputRef.current.click()}>File (Import)</div>
           <div className="px-3 py-1.5 rounded-md text-on-surface-variant font-body-md text-body-md hover:bg-surface-variant/50 transition-colors cursor-pointer active:scale-95" onClick={exportSVG}>Export</div>
           <div className="px-3 py-1.5 rounded-md text-on-surface-variant font-body-md text-body-md hover:bg-surface-variant/50 transition-colors cursor-pointer active:scale-95" onClick={handleClear}>Clear</div>
-          {isPattern && <div className="px-3 py-1.5 rounded-md text-amber-400 font-bold text-body-md hover:bg-amber-400/20 transition-colors cursor-pointer active:scale-95 border border-amber-400/30 ml-2" onClick={handleSavePattern}>Zapisz Wzór</div>}
 
           {(activeTool === 'smoother' || activeTool === 'snapper' || activeTool === 'drawer') && (
             <div className="flex items-center ml-4">
@@ -39,6 +38,9 @@ export default function ToolbarTop({ activeTool, forceCloseShape, setForceCloseS
 
       {/* Trailing Actions */}
       <div className="flex items-center gap-2">
+        {isPattern && (
+          <button onClick={onSavePattern} className="px-3 py-1.5 mr-2 rounded-md bg-[#FC0FC0] hover:bg-[#d90ca5] text-white font-medium text-xs shadow-[0_0_10px_rgba(252,15,192,0.5)] transition-colors cursor-pointer active:scale-95">Zapisz Wzór</button>
+        )}
         <button onClick={undo} disabled={!canUndo} className="p-2 rounded-full text-on-surface-variant hover:bg-[#FC0FC0]/10 hover:text-[#FC0FC0] transition-colors cursor-pointer active:scale-95 disabled:opacity-30">
             <span className="material-symbols-outlined text-[20px]">undo</span>
         </button>
