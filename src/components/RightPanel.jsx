@@ -1,4 +1,6 @@
 import React from 'react';
+import LawyersTab from './LawyersTab';
+
 
 export default function RightPanel({
   showRightPanel, setShowRightPanel, rightPanelTab, setRightPanelTab, bgImage, setBgImage,
@@ -17,12 +19,18 @@ export default function RightPanel({
         <button className="flex-1 pb-2 flex items-center justify-center gap-2 text-on-surface-variant hover:text-[#00FFFF] font-label-sm text-label-sm transition-all border-b-2 border-transparent hover:border-[#00FFFF]/50">
           <span className="material-symbols-outlined text-[16px]">layers</span> Warstwy
         </button>
+        <button onClick={() => setRightPanelTab('lawyer')} className={`flex-1 pb-2 flex items-center justify-center gap-2 font-label-sm text-label-sm transition-all border-b-2 ${rightPanelTab === 'lawyer' ? 'text-[#00FFFF] border-[#00FFFF] drop-shadow-[0_0_5px_rgba(0,255,255,0.5)]' : 'text-on-surface-variant hover:text-[#00FFFF] border-transparent hover:border-[#00FFFF]/50'}`}>
+          <span className="material-symbols-outlined text-[16px]">gavel</span> Lawyer
+        </button>
         <button onClick={() => setShowRightPanel(false)} className="flex-1 pb-2 flex items-center justify-center gap-2 text-on-surface-variant hover:text-white font-label-sm text-label-sm transition-all border-b-2 border-transparent">
           <span className="material-symbols-outlined text-[16px]">close</span> Zamknij
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6 font-body-md text-body-md custom-scrollbar">
+      <div className="flex-1 overflow-y-auto flex flex-col font-body-md text-body-md custom-scrollbar">
+        {rightPanelTab === 'options' && (
+          <div className="p-4 flex flex-col gap-6">
+
 
         {/* Gestures Section */}
         <section>
@@ -159,6 +167,9 @@ export default function RightPanel({
             </section>
           </>
         )}
+          </div>
+        )}
+        {rightPanelTab === 'lawyer' && <LawyersTab />}
       </div>
     </aside>
   );
