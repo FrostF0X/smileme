@@ -51,6 +51,10 @@ export default function useDrawing(svgRef, activeTool, globalColor, globalStroke
            shapeStartScaleX: activeShape.scaleX !== undefined ? activeShape.scaleX : 1,
            shapeStartScaleY: activeShape.scaleY !== undefined ? activeShape.scaleY : 1,
            shapeStartRotation: activeShape.rotation || 0,
+           shapeStartX: activeShape.x || 0,
+           shapeStartY: activeShape.y || 0,
+           shapeStartCx: (pts[0].x + pts[1].x) / 2,
+           shapeStartCy: (pts[0].y + pts[1].y) / 2,
            hasMoved: false
         };
       }
@@ -63,16 +67,28 @@ export default function useDrawing(svgRef, activeTool, globalColor, globalStroke
         ...shapeState
       };
     }
-    else if (activePointers.current.size === 1 && activeTool === 'pan') {
+    else if (activePointers.current.size === 1 && (activeTool === 'pan' || (activeTool === 'select' && transformTarget === 'selection' && selectedShapeIndices && selectedShapeIndices.length > 0))) {
        setIsDrawing(false); setCurrentStroke([]);
        const pt = getScreenCoordinates(e);
+
+       let shapeState = {};
+       if (activeTool === 'select' && transformTarget === 'selection') {
+         const activeShape = shapes[selectedShapeIndices[0]];
+         shapeState = {
+           shapeStartX: activeShape.x || 0,
+           shapeStartY: activeShape.y || 0,
+           hasMoved: false
+         };
+       }
+
        gestureStart.current = {
          canX: canvasTransform.x, canY: canvasTransform.y,
          imgX: bgImage.x, imgY: bgImage.y,
-         startX: pt.x, startY: pt.y
+         startX: pt.x, startY: pt.y,
+         ...shapeState
        };
     }
-    else if (activePointers.current.size === 1 && (activeTool === 'snapper' || activeTool === 'smoother' || activeTool === 'drawer' || activeTool === 'select')) {
+    else if (activePointers.current.size === 1 && (activeTool === 'snapper' || activeTool === 'smoother' || activeTool === 'drawer' || (activeTool === 'select' && transformTarget !== 'selection'))) {
       setIsDrawing(true); setCurrentStroke([getCoordinates(e)]);
     }
   }, [getCoordinates, getScreenCoordinates, activeTool, bgImage, canvasTransform]);
@@ -96,25 +112,51 @@ export default function useDrawing(svgRef, activeTool, globalColor, globalStroke
         const scaleRatio = dist / gestureStart.current.startDist;
         const angleDelta = (angle - gestureStart.current.startAngle) * (180 / Math.PI);
 
+        const currentCx = (pts[0].x + pts[1].x) / 2;
+        const currentCy = (pts[0].y + pts[1].y) / 2;
+
+        const dx = currentCx - gestureStart.current.shapeStartCx;
+        const dy = currentCy - gestureStart.current.shapeStartCy;
+
+        const scale = canvasTransform.scale || 1;
+        const actualDx = dx / scale;
+        const actualDy = dy / scale;
+
         const replaceHistory = gestureStart.current.hasMoved;
         updateSelectedShape({
           scaleX: gestureStart.current.shapeStartScaleX * scaleRatio,
           scaleY: gestureStart.current.shapeStartScaleY * scaleRatio,
-          rotation: (gestureStart.current.shapeStartRotation + angleDelta) % 360
-        }, replaceHistory);
+          rotation: (gestureStart.current.shapeStartRotation + angleDelta) % 360,
+          x: gestureStart.current.shapeStartX + actualDx,
+          y: gestureStart.current.shapeStartY + actualDy
+        }, replaceHistory, selectedShapeIndices);
         gestureStart.current.hasMoved = true;
       }
     }
-    else if (activePointers.current.size === 1 && activeTool === 'pan' && gestureStart.current) {
+    else if (activePointers.current.size === 1 && gestureStart.current) {
       const pt = getScreenCoordinates(e);
-      const { startX, startY, canX, canY, imgX, imgY } = gestureStart.current;
-      const dx = pt.x - startX;
-      const dy = pt.y - startY;
-      if (transformTarget === 'canvas') {
-        setCanvasTransform(prev => ({ ...prev, x: canX + dx, y: canY + dy }));
-      } else if (transformTarget === 'background' && bgImage.url) {
-        const scale = canvasTransform.scale;
-        setBgImage(prev => ({ ...prev, x: imgX + dx / scale, y: imgY + dy / scale }));
+      const dx = pt.x - gestureStart.current.startX;
+      const dy = pt.y - gestureStart.current.startY;
+
+      if (activeTool === 'pan') {
+        const { canX, canY, imgX, imgY } = gestureStart.current;
+        if (transformTarget === 'canvas') {
+          setCanvasTransform(prev => ({ ...prev, x: canX + dx, y: canY + dy }));
+        } else if (transformTarget === 'background' && bgImage.url) {
+          const scale = canvasTransform.scale;
+          setBgImage(prev => ({ ...prev, x: imgX + dx / scale, y: imgY + dy / scale }));
+        }
+      } else if (activeTool === 'select' && transformTarget === 'selection' && selectedShapeIndices && selectedShapeIndices.length > 0) {
+        const scale = canvasTransform.scale || 1;
+        const actualDx = dx / scale;
+        const actualDy = dy / scale;
+
+        const replaceHistory = gestureStart.current.hasMoved;
+        updateSelectedShape({
+          x: gestureStart.current.shapeStartX + actualDx,
+          y: gestureStart.current.shapeStartY + actualDy
+        }, replaceHistory, selectedShapeIndices);
+        gestureStart.current.hasMoved = true;
       }
     }
     else if (activePointers.current.size === 1 && isDrawing) {
